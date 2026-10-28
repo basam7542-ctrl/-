@@ -77,8 +77,13 @@ import com.example.ui.components.AddSupplierTransactionDialog
 import com.example.ui.components.EditCustomerTransactionDialog
 import com.example.ui.components.EditMerchantTransactionDialog
 import com.example.ui.components.EditSupplierTransactionDialog
+import com.example.ui.theme.CharcoalBackground
 import com.example.ui.theme.ElectricBlue
+import com.example.ui.theme.ElectricBlueContainer
 import com.example.ui.theme.ErrorRed
+import com.example.ui.theme.GlassBorder
+import com.example.ui.theme.GoldBorderGlow
+import com.example.ui.theme.GoldContainer
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.GoldSecondary
 import com.example.ui.theme.NavyCardBorder
@@ -163,7 +168,7 @@ fun AccountsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyDarkBackground)
+            .background(CharcoalBackground)
     ) {
         Column(
             modifier = Modifier
@@ -226,58 +231,117 @@ fun AccountsScreen(
                 val totalPaid = suppliers.sumOf { it.totalPaid }
                 val totalRemainingDue = suppliers.sumOf { it.remainingBalance }
 
-                // Metrics
-                Row(
+                // Specialized Executive Balance Sheet for Suppliers
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(bottom = 12.dp),
+                    colors = CardDefaults.cardColors(containerColor = NavySurfaceElevated),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GoldBorderGlow),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = NavySurface),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder))
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "إجمالي المشتريات", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                            Text(
-                                text = "${numberFormat.format(totalPurchases)} ج.م",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextWhite
-                            )
-                        }
-                    }
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(GoldPrimary.copy(alpha = 0.15f))
+                                    .border(1.dp, GoldPrimary, androidx.compose.foundation.shape.CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.Business, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(18.dp))
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "الموقف المالي مع الموردين",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextWhite
+                                    )
+                                    Text(
+                                        text = "${suppliers.size} شركة موردة مسجلة",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = GoldSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
 
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = NavySurface),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder))
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "إجمالي المسدد", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                            Text(
-                                text = "${numberFormat.format(totalPaid)} ج.م",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = SuccessGreen
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(if (totalRemainingDue > 0) ErrorRed.copy(alpha = 0.18f) else SuccessGreen.copy(alpha = 0.18f))
+                                    .border(
+                                        0.8.dp,
+                                        if (totalRemainingDue > 0) ErrorRed.copy(alpha = 0.6f) else SuccessGreen.copy(alpha = 0.6f),
+                                        RoundedCornerShape(20.dp)
+                                    )
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = if (totalRemainingDue > 0) "مستحقات قائمة للموردين" else "الحسابات مسددة بالكامل ✓",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (totalRemainingDue > 0) ErrorRed else SuccessGreen,
+                                    fontSize = 10.sp
+                                )
+                            }
                         }
-                    }
 
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = NavySurface),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ErrorRed.copy(alpha = 0.5f)))
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "المستحق عليّ للموردين", style = MaterialTheme.typography.labelSmall, color = ErrorRed)
-                            Text(
-                                text = "${numberFormat.format(totalRemainingDue)} ج.م",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = GoldPrimary
-                            )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Net Outstanding Balance Hero Box
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NavySurface)
+                                .border(0.8.dp, GlassBorder, RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(text = "صافي المبالغ المستحقة عليّ للموردين", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                    Text(
+                                        text = "${numberFormat.format(totalRemainingDue)} ج.م",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = if (totalRemainingDue > 0) GoldPrimary else SuccessGreen
+                                    )
+                                }
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(text = "إجمالي المشتريات", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp)
+                                        Text(
+                                            text = "${numberFormat.format(totalPurchases)} ج.م",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextWhite
+                                        )
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(text = "إجمالي المسدد", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp)
+                                        Text(
+                                            text = "${numberFormat.format(totalPaid)} ج.م",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = SuccessGreen
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -332,58 +396,113 @@ fun AccountsScreen(
                 val totalCollected = merchants.sumOf { it.totalCollected }
                 val totalRemainingDueToMe = merchants.sumOf { it.remainingDueToMe }
 
-                // Metrics
-                Row(
+                // Specialized Executive Balance Sheet for Merchants
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(bottom = 12.dp),
+                    colors = CardDefaults.cardColors(containerColor = NavySurfaceElevated),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GoldBorderGlow),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = NavySurface),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder))
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "البضاعة المسلمة", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                            Text(
-                                text = "${numberFormat.format(totalGoodsDelivered)} ج.م",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextWhite
-                            )
-                        }
-                    }
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(ElectricBlue.copy(alpha = 0.15f))
+                                    .border(1.dp, ElectricBlue, androidx.compose.foundation.shape.CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.Handshake, contentDescription = null, tint = ElectricBlue, modifier = Modifier.size(18.dp))
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "الموقف المالي مع تجار الجملة",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextWhite
+                                    )
+                                    Text(
+                                        text = "${merchants.size} تاجر جملة معتمد",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = GoldSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
 
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = NavySurface),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder))
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "إجمالي المحصل", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                            Text(
-                                text = "${numberFormat.format(totalCollected)} ج.م",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = SuccessGreen
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(GoldPrimary.copy(alpha = 0.15f))
+                                    .border(0.8.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = if (totalRemainingDueToMe > 0) "مستحقات لنا طرف التجار" else "الحسابات مصفاة بالكامل ✓",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldPrimary,
+                                    fontSize = 10.sp
+                                )
+                            }
                         }
-                    }
 
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = NavySurface),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(GoldPrimary.copy(alpha = 0.5f)))
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "المستحق لي طرف التجار", style = MaterialTheme.typography.labelSmall, color = GoldSecondary)
-                            Text(
-                                text = "${numberFormat.format(totalRemainingDueToMe)} ج.م",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = GoldPrimary
-                            )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Net Outstanding Hero Box
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NavySurface)
+                                .border(0.8.dp, GlassBorder, RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(text = "صافي المبالغ المستحقة لنا طرف التجار", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                    Text(
+                                        text = "${numberFormat.format(totalRemainingDueToMe)} ج.م",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = GoldPrimary
+                                    )
+                                }
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(text = "بضاعة مسلمة", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp)
+                                        Text(
+                                            text = "${numberFormat.format(totalGoodsDelivered)} ج.م",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextWhite
+                                        )
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(text = "إجمالي المحصل", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp)
+                                        Text(
+                                            text = "${numberFormat.format(totalCollected)} ج.م",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = SuccessGreen
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -437,58 +556,113 @@ fun AccountsScreen(
                 val totalCollected = customers.sumOf { it.totalCollected }
                 val totalRemainingDueToMe = customers.sumOf { it.remainingDueToMe }
 
-                // Metrics
-                Row(
+                // Specialized Executive Balance Sheet for Retail Customers
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(bottom = 12.dp),
+                    colors = CardDefaults.cardColors(containerColor = NavySurfaceElevated),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GoldBorderGlow),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = NavySurface),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder))
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "مبيعات الآجل", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                            Text(
-                                text = "${numberFormat.format(totalCreditSales)} ج.م",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextWhite
-                            )
-                        }
-                    }
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(GoldContainer)
+                                    .border(1.dp, GoldPrimary, androidx.compose.foundation.shape.CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.Person, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(18.dp))
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "الموقف المالي لحسابات الآجل بالخارج",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextWhite
+                                    )
+                                    Text(
+                                        text = "${customers.size} حساب عميل آجل مسجل",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = GoldSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
 
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = NavySurface),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder))
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "إجمالي المحصل", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                            Text(
-                                text = "${numberFormat.format(totalCollected)} ج.م",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = SuccessGreen
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(GoldPrimary.copy(alpha = 0.15f))
+                                    .border(0.8.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = if (totalRemainingDueToMe > 0) "أقساط وآجل بالخارج" else "لا توجد مستحقات متأخرة ✓",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldPrimary,
+                                    fontSize = 10.sp
+                                )
+                            }
                         }
-                    }
 
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = NavySurface),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(GoldPrimary.copy(alpha = 0.5f)))
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "المستحق طرف العملاء", style = MaterialTheme.typography.labelSmall, color = GoldSecondary)
-                            Text(
-                                text = "${numberFormat.format(totalRemainingDueToMe)} ج.م",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = GoldPrimary
-                            )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Net Outstanding Hero Box
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NavySurface)
+                                .border(0.8.dp, GlassBorder, RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(text = "صافي المبالغ المستحقة لنا طرف الزبائن", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                    Text(
+                                        text = "${numberFormat.format(totalRemainingDueToMe)} ج.م",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = GoldPrimary
+                                    )
+                                }
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(text = "مبيعات الآجل", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp)
+                                        Text(
+                                            text = "${numberFormat.format(totalCreditSales)} ج.م",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextWhite
+                                        )
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(text = "إجمالي المحصل", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp)
+                                        Text(
+                                            text = "${numberFormat.format(totalCollected)} ج.م",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = SuccessGreen
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -1720,15 +1894,20 @@ fun SupplierCard(
     onOpenStatement: () -> Unit,
     onDeleteSupplier: () -> Unit = {}
 ) {
+    val isDue = supplier.remainingBalance > 0
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onOpenStatement() },
         colors = CardDefaults.cardColors(containerColor = NavySurface),
-        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder)),
-        shape = RoundedCornerShape(12.dp)
+        border = CardDefaults.outlinedCardBorder().copy(
+            brush = SolidColor(if (isDue) GoldBorderGlow else GlassBorder)
+        ),
+        shape = RoundedCornerShape(14.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
+            // Header: Avatar + Supplier Name + Admin Delete
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1738,92 +1917,131 @@ fun SupplierCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Business, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = supplier.supplierName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextWhite
-                    )
-                }
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(GoldContainer)
+                            .border(1.dp, GoldPrimary, androidx.compose.foundation.shape.CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = supplier.supplierName.take(1),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = GoldPrimary
+                        )
+                    }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (isAdmin) {
-                        IconButton(
-                            onClick = onDeleteSupplier,
-                            modifier = Modifier.size(34.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = "حذف المورد",
-                                tint = ErrorRed.copy(alpha = 0.8f),
-                                modifier = Modifier.size(18.dp)
-                            )
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column {
+                        Text(
+                            text = supplier.supplierName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextWhite
+                        )
+                        if (supplier.phone.isNotBlank()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Call, contentDescription = null, tint = TextMuted, modifier = Modifier.size(11.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = supplier.phone, style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
+                            }
                         }
                     }
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack, // points left in RTL
-                        contentDescription = "عرض كشف الحساب",
-                        tint = GoldSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
-            }
 
-            if (supplier.phone.isNotBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Call, contentDescription = null, tint = TextMuted, modifier = Modifier.size(12.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = supplier.phone, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                // Balance status pill
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isDue) ErrorRed.copy(alpha = 0.18f) else SuccessGreen.copy(alpha = 0.18f))
+                        .border(
+                            0.8.dp,
+                            if (isDue) ErrorRed.copy(alpha = 0.6f) else SuccessGreen.copy(alpha = 0.6f),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = if (isDue) "مستحق: ${numberFormat.format(supplier.remainingBalance)} ج.م" else "خالص ✓",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDue) ErrorRed else SuccessGreen,
+                        fontSize = 11.sp
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Pricing Boxes
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Financial Summary Row
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(NavySurfaceVariant)
+                    .border(0.6.dp, GlassBorder, RoundedCornerShape(10.dp))
+                    .padding(10.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NavySurfaceVariant)
-                        .padding(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("إجمالي المشتريات", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                        Text("إجمالي المشتريات", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
                         Text("${numberFormat.format(supplier.totalPurchases)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = TextWhite)
                     }
-                }
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NavySurfaceVariant)
-                        .padding(8.dp)
-                ) {
-                    Column {
-                        Text("المسدد", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("المسدد للمورد", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
                         Text("${numberFormat.format(supplier.totalPaid)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = SuccessGreen)
                     }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("المتبقي له", style = MaterialTheme.typography.labelSmall, color = GoldSecondary, fontSize = 10.sp)
+                        Text("${numberFormat.format(supplier.remainingBalance)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = GoldPrimary)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Action Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = onOpenStatement,
+                    colors = ButtonDefaults.buttonColors(containerColor = NavySurfaceElevated, contentColor = GoldPrimary),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f).height(36.dp)
+                ) {
+                    Text("عرض كشف الحساب والعمليات", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack, // In RTL, points left into the details
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NavySurfaceVariant)
-                        .border(1.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    Column {
-                        Text("المستحق للمورد", style = MaterialTheme.typography.labelSmall, color = ErrorRed)
-                        Text("${numberFormat.format(supplier.remainingBalance)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = GoldPrimary)
+                if (isAdmin) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = onDeleteSupplier,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteOutline,
+                            contentDescription = "حذف المورد",
+                            tint = ErrorRed.copy(alpha = 0.8f),
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }
@@ -1839,15 +2057,20 @@ fun MerchantCard(
     onOpenStatement: () -> Unit,
     onDeleteMerchant: () -> Unit = {}
 ) {
+    val isDue = merchant.remainingDueToMe > 0
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onOpenStatement() },
         colors = CardDefaults.cardColors(containerColor = NavySurface),
-        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder)),
-        shape = RoundedCornerShape(12.dp)
+        border = CardDefaults.outlinedCardBorder().copy(
+            brush = SolidColor(if (isDue) GoldBorderGlow else GlassBorder)
+        ),
+        shape = RoundedCornerShape(14.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
+            // Header: Avatar + Merchant Name + Status Pill
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1857,92 +2080,131 @@ fun MerchantCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Handshake, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = merchant.merchantName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextWhite
-                    )
-                }
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(ElectricBlueContainer)
+                            .border(1.dp, ElectricBlue, androidx.compose.foundation.shape.CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = merchant.merchantName.take(1),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = ElectricBlue
+                        )
+                    }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (isAdmin) {
-                        IconButton(
-                            onClick = onDeleteMerchant,
-                            modifier = Modifier.size(34.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = "حذف التاجر",
-                                tint = ErrorRed.copy(alpha = 0.8f),
-                                modifier = Modifier.size(18.dp)
-                            )
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column {
+                        Text(
+                            text = merchant.merchantName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextWhite
+                        )
+                        if (merchant.phone.isNotBlank()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Call, contentDescription = null, tint = TextMuted, modifier = Modifier.size(11.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = merchant.phone, style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
+                            }
                         }
                     }
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack, // points left in RTL
-                        contentDescription = "عرض كشف الحساب",
-                        tint = GoldSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
-            }
 
-            if (merchant.phone.isNotBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Call, contentDescription = null, tint = TextMuted, modifier = Modifier.size(12.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = merchant.phone, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                // Balance status pill
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isDue) GoldPrimary.copy(alpha = 0.18f) else SuccessGreen.copy(alpha = 0.18f))
+                        .border(
+                            0.8.dp,
+                            if (isDue) GoldPrimary.copy(alpha = 0.6f) else SuccessGreen.copy(alpha = 0.6f),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = if (isDue) "لنا طرفه: ${numberFormat.format(merchant.remainingDueToMe)} ج.م" else "مصفى بالكامل ✓",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDue) GoldPrimary else SuccessGreen,
+                        fontSize = 11.sp
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Pricing Boxes
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Financial Summary Row
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(NavySurfaceVariant)
+                    .border(0.6.dp, GlassBorder, RoundedCornerShape(10.dp))
+                    .padding(10.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NavySurfaceVariant)
-                        .padding(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("البضاعة المسلمة", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                        Text("بضاعة مسلمة", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
                         Text("${numberFormat.format(merchant.totalGoodsDelivered)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = TextWhite)
                     }
-                }
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NavySurfaceVariant)
-                        .padding(8.dp)
-                ) {
-                    Column {
-                        Text("المحصل", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("المحصل منه", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
                         Text("${numberFormat.format(merchant.totalCollected)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = SuccessGreen)
                     }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("المستحق لي", style = MaterialTheme.typography.labelSmall, color = GoldSecondary, fontSize = 10.sp)
+                        Text("${numberFormat.format(merchant.remainingDueToMe)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = GoldPrimary)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Action Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = onOpenStatement,
+                    colors = ButtonDefaults.buttonColors(containerColor = NavySurfaceElevated, contentColor = GoldPrimary),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f).height(36.dp)
+                ) {
+                    Text("عرض كشف الحساب والعمليات", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NavySurfaceVariant)
-                        .border(1.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    Column {
-                        Text("المستحق لي", style = MaterialTheme.typography.labelSmall, color = GoldSecondary)
-                        Text("${numberFormat.format(merchant.remainingDueToMe)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = GoldPrimary)
+                if (isAdmin) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = onDeleteMerchant,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteOutline,
+                            contentDescription = "حذف التاجر",
+                            tint = ErrorRed.copy(alpha = 0.8f),
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }
@@ -1958,15 +2220,20 @@ fun CustomerCard(
     onOpenStatement: () -> Unit,
     onDeleteCustomer: () -> Unit = {}
 ) {
+    val isDue = customer.remainingDueToMe > 0
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onOpenStatement() },
         colors = CardDefaults.cardColors(containerColor = NavySurface),
-        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder)),
-        shape = RoundedCornerShape(12.dp)
+        border = CardDefaults.outlinedCardBorder().copy(
+            brush = SolidColor(if (isDue) GoldBorderGlow else GlassBorder)
+        ),
+        shape = RoundedCornerShape(14.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
+            // Header: Avatar + Customer Name + Status Pill
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1976,92 +2243,131 @@ fun CustomerCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = customer.customerName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextWhite
-                    )
-                }
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(GoldContainer)
+                            .border(1.dp, GoldPrimary, androidx.compose.foundation.shape.CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = customer.customerName.take(1),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = GoldPrimary
+                        )
+                    }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (isAdmin) {
-                        IconButton(
-                            onClick = onDeleteCustomer,
-                            modifier = Modifier.size(34.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = "حذف الحساب",
-                                tint = ErrorRed.copy(alpha = 0.8f),
-                                modifier = Modifier.size(18.dp)
-                            )
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column {
+                        Text(
+                            text = customer.customerName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextWhite
+                        )
+                        if (customer.phone.isNotBlank()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Call, contentDescription = null, tint = TextMuted, modifier = Modifier.size(11.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = customer.phone, style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
+                            }
                         }
                     }
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack, // points left in RTL
-                        contentDescription = "عرض كشف الحساب",
-                        tint = GoldSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
-            }
 
-            if (customer.phone.isNotBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Call, contentDescription = null, tint = TextMuted, modifier = Modifier.size(12.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = customer.phone, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                // Balance status pill
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isDue) GoldPrimary.copy(alpha = 0.18f) else SuccessGreen.copy(alpha = 0.18f))
+                        .border(
+                            0.8.dp,
+                            if (isDue) GoldPrimary.copy(alpha = 0.6f) else SuccessGreen.copy(alpha = 0.6f),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = if (isDue) "آجل: ${numberFormat.format(customer.remainingDueToMe)} ج.م" else "خالص ✓",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDue) GoldPrimary else SuccessGreen,
+                        fontSize = 11.sp
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Pricing Boxes
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Financial Summary Row
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(NavySurfaceVariant)
+                    .border(0.6.dp, GlassBorder, RoundedCornerShape(10.dp))
+                    .padding(10.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NavySurfaceVariant)
-                        .padding(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("مبيعات الآجل", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                        Text("مبيعات الآجل", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
                         Text("${numberFormat.format(customer.totalCreditSales)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = TextWhite)
                     }
-                }
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NavySurfaceVariant)
-                        .padding(8.dp)
-                ) {
-                    Column {
-                        Text("المحصل", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("المحصل منه", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
                         Text("${numberFormat.format(customer.totalCollected)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = SuccessGreen)
                     }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("المستحق لي", style = MaterialTheme.typography.labelSmall, color = GoldSecondary, fontSize = 10.sp)
+                        Text("${numberFormat.format(customer.remainingDueToMe)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = GoldPrimary)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Action Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = onOpenStatement,
+                    colors = ButtonDefaults.buttonColors(containerColor = NavySurfaceElevated, contentColor = GoldPrimary),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f).height(36.dp)
+                ) {
+                    Text("عرض كشف الحساب والعمليات", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NavySurfaceVariant)
-                        .border(1.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    Column {
-                        Text("المستحق لي", style = MaterialTheme.typography.labelSmall, color = GoldSecondary)
-                        Text("${numberFormat.format(customer.remainingDueToMe)} ج.م", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = GoldPrimary)
+                if (isAdmin) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = onDeleteCustomer,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteOutline,
+                            contentDescription = "حذف الحساب",
+                            tint = ErrorRed.copy(alpha = 0.8f),
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }

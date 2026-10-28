@@ -16,12 +16,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,12 +43,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.SaleRecordEntity
 import com.example.data.local.UserAccountEntity
+import com.example.ui.theme.CharcoalBackground
+import com.example.ui.theme.ElectricBlue
+import com.example.ui.theme.ElectricBlueContainer
+import com.example.ui.theme.GlassBorder
+import com.example.ui.theme.GoldBorderGlow
+import com.example.ui.theme.GoldContainer
 import com.example.ui.theme.GoldLight
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.GoldSecondary
@@ -54,6 +64,7 @@ import com.example.ui.theme.NavyDarkBackground
 import com.example.ui.theme.NavySurface
 import com.example.ui.theme.NavySurfaceElevated
 import com.example.ui.theme.NavySurfaceVariant
+import com.example.ui.theme.SuccessGreen
 import com.example.ui.theme.TextDark
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextWhite
@@ -82,83 +93,155 @@ fun SalesLogScreen(
     val totalRevenue = filteredSales.sumOf { it.totalPrice }
     val totalTransactionsCount = filteredSales.size
     val totalQuantitySold = filteredSales.sumOf { it.quantity }
+    val avgTransaction = if (totalTransactionsCount > 0) totalRevenue / totalTransactionsCount else 0.0
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyDarkBackground)
+            .background(CharcoalBackground)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
-            // Summary Header Cards
-            Row(
+            // 1. Executive Sales Ribbon / Register Card
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                colors = CardDefaults.cardColors(containerColor = NavySurfaceElevated),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GoldBorderGlow),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                // Total Revenue Card
-                Card(
-                    modifier = Modifier.weight(1.2f),
-                    colors = CardDefaults.cardColors(containerColor = NavySurface),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(GoldPrimary.copy(alpha = 0.5f)))
-                ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.PointOfSale, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = "إجمالي المبيعات", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(GoldContainer)
+                                    .border(1.dp, GoldPrimary, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.PointOfSale, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(20.dp))
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "دفتر مبيعات وفواتير المحل",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextWhite
+                                )
+                                Text(
+                                    text = "سجل الإيرادات المحصلة والمعاملات الصادرة",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = GoldSecondary,
+                                    fontSize = 10.sp
+                                )
+                            }
                         }
-                        Text(
-                            text = "${numberFormat.format(totalRevenue)} ج.م",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = GoldSecondary
-                        )
-                    }
-                }
 
-                // Operations Count
-                Card(
-                    modifier = Modifier.weight(0.9f),
-                    colors = CardDefaults.cardColors(containerColor = NavySurface),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(NavyCardBorder))
-                ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
-                        Text(text = "عدد العمليات", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                        Text(
-                            text = "$totalTransactionsCount عملية",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextWhite
-                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(GoldPrimary.copy(alpha = 0.15f))
+                                .border(0.8.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.TrendingUp, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "$totalTransactionsCount فاتورة صادرة",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldPrimary,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
                     }
-                }
 
-                // Total Pieces
-                Card(
-                    modifier = Modifier.weight(0.9f),
-                    colors = CardDefaults.cardColors(containerColor = NavySurface),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(NavyCardBorder))
-                ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
-                        Text(text = "إجمالي القطع", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                        Text(
-                            text = "$totalQuantitySold قطعة",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = GoldLight
-                        )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // 3-way specialized financial summary strip
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Total Revenue (Hero)
+                        Box(
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NavySurface)
+                                .border(0.8.dp, GoldBorderGlow, RoundedCornerShape(12.dp))
+                                .padding(10.dp)
+                        ) {
+                            Column {
+                                Text(text = "إجمالي الإيرادات المحصلة", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                Text(
+                                    text = "${numberFormat.format(totalRevenue)} ج.م",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = GoldPrimary
+                                )
+                            }
+                        }
+
+                        // Average per transaction
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NavySurface)
+                                .border(0.8.dp, GlassBorder, RoundedCornerShape(12.dp))
+                                .padding(10.dp)
+                        ) {
+                            Column {
+                                Text(text = "متوسط الفاتورة", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                Text(
+                                    text = "${numberFormat.format(avgTransaction)} ج.م",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextWhite
+                                )
+                            }
+                        }
+
+                        // Total sold units
+                        Box(
+                            modifier = Modifier
+                                .weight(0.9f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NavySurface)
+                                .border(0.8.dp, GlassBorder, RoundedCornerShape(12.dp))
+                                .padding(10.dp)
+                        ) {
+                            Column {
+                                Text(text = "إجمالي القطع", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                Text(
+                                    text = "$totalQuantitySold قطعة",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldLight
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             // Seller Filter Chips
             Text(
-                text = "فلترة حسب البائع:",
+                text = "فلترة الفواتير حسب البائع:",
                 style = MaterialTheme.typography.labelSmall,
                 color = TextMuted,
                 modifier = Modifier.padding(bottom = 4.dp)
@@ -205,7 +288,7 @@ fun SalesLogScreen(
                 }
             }
 
-            // Sales Operations List
+            // Sales Receipts List
             if (filteredSales.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -250,44 +333,67 @@ fun SaleRecordCard(
             .fillMaxWidth()
             .testTag("sale_record_card_${sale.id}"),
         colors = CardDefaults.cardColors(containerColor = NavySurface),
-        border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(NavyCardBorder)),
-        shape = RoundedCornerShape(12.dp)
+        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(GlassBorder)),
+        shape = RoundedCornerShape(14.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            // Header: Date & Seller Badge
+            // Receipt Header Bar: Serial + Date + Seller Chip
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Serial Number badge
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(GoldContainer)
+                        .border(0.6.dp, GoldPrimary, RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.ReceiptLong, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "#فاتورة-${sale.id}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = GoldPrimary,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                // Date & Time
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.CalendarToday,
                         contentDescription = null,
                         tint = TextMuted,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = dateFormat.format(Date(sale.timestamp)),
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted
+                        color = TextMuted,
+                        fontSize = 10.sp
                     )
                 }
 
-                // Seller Chip
+                // Cashier Avatar Chip
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
                         .background(NavySurfaceElevated)
-                        .border(1.dp, GoldPrimary, RoundedCornerShape(12.dp))
+                        .border(0.8.dp, GlassBorder, RoundedCornerShape(12.dp))
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Default.Person,
                             contentDescription = null,
-                            tint = GoldPrimary,
+                            tint = GoldSecondary,
                             modifier = Modifier.size(12.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -295,15 +401,16 @@ fun SaleRecordCard(
                             text = sale.sellerName,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = GoldSecondary
+                            color = GoldSecondary,
+                            fontSize = 10.sp
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Product & Model
+            // Product & Category Title
             Text(
                 text = "${sale.productName} - ${sale.modelName}",
                 style = MaterialTheme.typography.titleMedium,
@@ -314,7 +421,7 @@ fun SaleRecordCard(
             Text(
                 text = "${sale.categoryName} • ${sale.brandName}",
                 style = MaterialTheme.typography.labelSmall,
-                color = TextMuted
+                color = GoldSecondary
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -323,8 +430,9 @@ fun SaleRecordCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(NavySurfaceVariant)
+                    .border(0.6.dp, GlassBorder, RoundedCornerShape(10.dp))
                     .padding(10.dp)
             ) {
                 Row(
@@ -334,12 +442,12 @@ fun SaleRecordCard(
                 ) {
                     Column {
                         Text(
-                            text = "سعر القطعة الفعلي:",
+                            text = "سعر القطعة المباعة:",
                             style = MaterialTheme.typography.labelSmall,
                             color = TextMuted
                         )
                         Text(
-                            text = "${numberFormat.format(sale.soldPrice)} ج.م × ${sale.quantity}",
+                            text = "${numberFormat.format(sale.soldPrice)} ج.م × ${sale.quantity} قطعة",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = TextWhite
@@ -348,7 +456,7 @@ fun SaleRecordCard(
 
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "إجمالي المبلغ المحصل:",
+                            text = "المبلغ المحصل نقداً:",
                             style = MaterialTheme.typography.labelSmall,
                             color = GoldSecondary
                         )
@@ -365,9 +473,10 @@ fun SaleRecordCard(
             if (sale.notes.isNotBlank()) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "ملاحظات: ${sale.notes}",
+                    text = "ملاحظات الفاتورة: ${sale.notes}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted
+                    color = TextMuted,
+                    fontSize = 11.sp
                 )
             }
 
@@ -380,10 +489,8 @@ fun SaleRecordCard(
                     OutlinedButton(
                         onClick = { onPrintSaleReceipt(sale) },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = GoldPrimary),
-                        border = ButtonDefaults.outlinedButtonBorder().copy(
-                            brush = androidx.compose.ui.graphics.SolidColor(GoldPrimary.copy(alpha = 0.6f))
-                        ),
-                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GoldPrimary.copy(alpha = 0.7f)),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.testTag("reprint_sale_button_${sale.id}")
                     ) {
                         Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(16.dp))

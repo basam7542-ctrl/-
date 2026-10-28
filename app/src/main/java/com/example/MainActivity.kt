@@ -17,6 +17,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -71,6 +73,12 @@ import com.example.ui.screens.LoginScreen
 import com.example.ui.screens.RecycleBinScreen
 import com.example.ui.screens.SalesLogScreen
 import com.example.ui.screens.SettingsScreen
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import com.example.ui.theme.CharcoalBackground
+import com.example.ui.theme.ElectricBlue
+import com.example.ui.theme.GlassBorder
+import com.example.ui.theme.GoldBorderGlow
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.GoldSecondary
 import com.example.ui.theme.MyApplicationTheme
@@ -263,62 +271,34 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                 )
             },
             bottomBar = {
-                NavigationBar(
-                    containerColor = NavySurface,
-                    contentColor = GoldPrimary,
+                androidx.compose.foundation.layout.Column(
                     modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
                 ) {
-                    NavigationBarItem(
-                        selected = currentTab == MainTab.CATALOG,
-                        onClick = { viewModel.selectTab(MainTab.CATALOG) },
-                        icon = { Icon(Icons.Default.GridView, contentDescription = "الكتالوج الهرمي") },
-                        label = { Text("الكتالوج", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = TextDark,
-                            selectedTextColor = GoldPrimary,
-                            indicatorColor = GoldPrimary,
-                            unselectedIconColor = TextMuted,
-                            unselectedTextColor = TextMuted
-                        ),
-                        modifier = Modifier.testTag("nav_tab_catalog")
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color.Transparent,
+                                        GoldBorderGlow,
+                                        ElectricBlue.copy(alpha = 0.35f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
                     )
-
-                    NavigationBarItem(
-                        selected = currentTab == MainTab.INVENTORY,
-                        onClick = { viewModel.selectTab(MainTab.INVENTORY) },
-                        icon = { Icon(Icons.Default.Inventory2, contentDescription = "المخزون الشامل") },
-                        label = { Text("المخزون", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = TextDark,
-                            selectedTextColor = GoldPrimary,
-                            indicatorColor = GoldPrimary,
-                            unselectedIconColor = TextMuted,
-                            unselectedTextColor = TextMuted
-                        ),
-                        modifier = Modifier.testTag("nav_tab_inventory")
-                    )
-
-                    NavigationBarItem(
-                        selected = currentTab == MainTab.SALES_LOG,
-                        onClick = { viewModel.selectTab(MainTab.SALES_LOG) },
-                        icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "سجل المبيعات") },
-                        label = { Text("المبيعات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = TextDark,
-                            selectedTextColor = GoldPrimary,
-                            indicatorColor = GoldPrimary,
-                            unselectedIconColor = TextMuted,
-                            unselectedTextColor = TextMuted
-                        ),
-                        modifier = Modifier.testTag("nav_tab_sales")
-                    )
-
-                    if (isAdmin) {
+                    NavigationBar(
+                        containerColor = NavySurface,
+                        contentColor = GoldPrimary,
+                        tonalElevation = 6.dp
+                    ) {
                         NavigationBarItem(
-                            selected = currentTab == MainTab.ACCOUNTS,
-                            onClick = { viewModel.selectTab(MainTab.ACCOUNTS) },
-                            icon = { Icon(Icons.Default.AccountBalance, contentDescription = "كشوف الحسابات") },
-                            label = { Text("الحسابات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                            selected = currentTab == MainTab.CATALOG,
+                            onClick = { viewModel.selectTab(MainTab.CATALOG) },
+                            icon = { Icon(Icons.Default.GridView, contentDescription = "الكتالوج الهرمي") },
+                            label = { Text("الكتالوج", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = TextDark,
                                 selectedTextColor = GoldPrimary,
@@ -326,28 +306,75 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                                 unselectedIconColor = TextMuted,
                                 unselectedTextColor = TextMuted
                             ),
-                            modifier = Modifier.testTag("nav_tab_accounts")
+                            modifier = Modifier.testTag("nav_tab_catalog")
+                        )
+
+                        NavigationBarItem(
+                            selected = currentTab == MainTab.INVENTORY,
+                            onClick = { viewModel.selectTab(MainTab.INVENTORY) },
+                            icon = { Icon(Icons.Default.Inventory2, contentDescription = "المخزون الشامل") },
+                            label = { Text("المخزون", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = TextDark,
+                                selectedTextColor = GoldPrimary,
+                                indicatorColor = GoldPrimary,
+                                unselectedIconColor = TextMuted,
+                                unselectedTextColor = TextMuted
+                            ),
+                            modifier = Modifier.testTag("nav_tab_inventory")
+                        )
+
+                        NavigationBarItem(
+                            selected = currentTab == MainTab.SALES_LOG,
+                            onClick = { viewModel.selectTab(MainTab.SALES_LOG) },
+                            icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "سجل المبيعات") },
+                            label = { Text("المبيعات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = TextDark,
+                                selectedTextColor = GoldPrimary,
+                                indicatorColor = GoldPrimary,
+                                unselectedIconColor = TextMuted,
+                                unselectedTextColor = TextMuted
+                            ),
+                            modifier = Modifier.testTag("nav_tab_sales")
+                        )
+
+                        if (isAdmin) {
+                            NavigationBarItem(
+                                selected = currentTab == MainTab.ACCOUNTS,
+                                onClick = { viewModel.selectTab(MainTab.ACCOUNTS) },
+                                icon = { Icon(Icons.Default.AccountBalance, contentDescription = "كشوف الحسابات") },
+                                label = { Text("الحسابات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = TextDark,
+                                    selectedTextColor = GoldPrimary,
+                                    indicatorColor = GoldPrimary,
+                                    unselectedIconColor = TextMuted,
+                                    unselectedTextColor = TextMuted
+                                ),
+                                modifier = Modifier.testTag("nav_tab_accounts")
+                            )
+                        }
+
+                        NavigationBarItem(
+                            selected = currentTab == MainTab.SETTINGS,
+                            onClick = { viewModel.selectTab(MainTab.SETTINGS) },
+                            icon = { Icon(Icons.Default.Settings, contentDescription = "الإعدادات") },
+                            label = { Text("الإعدادات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = TextDark,
+                                selectedTextColor = GoldPrimary,
+                                indicatorColor = GoldPrimary,
+                                unselectedIconColor = TextMuted,
+                                unselectedTextColor = TextMuted
+                            ),
+                            modifier = Modifier.testTag("nav_tab_settings")
                         )
                     }
-
-                    NavigationBarItem(
-                        selected = currentTab == MainTab.SETTINGS,
-                        onClick = { viewModel.selectTab(MainTab.SETTINGS) },
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "الإعدادات") },
-                        label = { Text("الإعدادات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = TextDark,
-                            selectedTextColor = GoldPrimary,
-                            indicatorColor = GoldPrimary,
-                            unselectedIconColor = TextMuted,
-                            unselectedTextColor = TextMuted
-                        ),
-                        modifier = Modifier.testTag("nav_tab_settings")
-                    )
                 }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
-            containerColor = NavyDarkBackground
+            containerColor = CharcoalBackground
         ) { innerPadding ->
             Box(
                 modifier = Modifier

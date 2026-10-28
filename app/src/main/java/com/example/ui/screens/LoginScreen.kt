@@ -84,11 +84,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.ui.theme.ElectricBlue
+import com.example.ui.theme.ElectricBlueContainer
 import com.example.ui.theme.ErrorRed
+import com.example.ui.theme.GlassBorder
+import com.example.ui.theme.GoldBorderGlow
 import com.example.ui.theme.GoldContainer
+import com.example.ui.theme.GoldLight
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.GoldSecondary
 import com.example.ui.theme.NavyCardBorder
+import com.example.ui.theme.NavyDarkBackground
 import com.example.ui.theme.NavySurface
 import com.example.ui.theme.NavySurfaceElevated
 import com.example.ui.theme.NavySurfaceVariant
@@ -108,14 +114,14 @@ enum class StartupScreenStage {
     ACCOUNT_SELECTION
 }
 
-// Subtle gradient from deep navy to slightly lighter navy for premium depth
+// Deep charcoal to midnight navy gradient
 private val NavyGradientBrush = Brush.verticalGradient(
     colors = listOf(
-        Color(0xFF060B18),
-        Color(0xFF09142E),
-        Color(0xFF10224A),
-        Color(0xFF0C1838),
-        Color(0xFF060B18)
+        Color(0xFF050811),
+        Color(0xFF090F1E),
+        Color(0xFF101C34),
+        Color(0xFF0A1224),
+        Color(0xFF050811)
     )
 )
 
@@ -220,16 +226,41 @@ fun WelcomeSplashScreen(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "مرحباً بكم في نظام الإدارة الداخلي",
+                    text = "مرحباً بكم في نظام الإدارة الداخلي المعتمد",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextMuted,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(44.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Feature Highlights Chips
+                Row(
+                    modifier = Modifier.padding(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf("مخزون ذكي", "كشوف حسابات", "سلة محذوفات", "طباعة فواتير").forEach { tag ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(NavySurfaceElevated.copy(alpha = 0.85f))
+                                .border(0.8.dp, GlassBorder, RoundedCornerShape(20.dp))
+                                .padding(horizontal = 9.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = tag,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = GoldLight,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
 
                 // Prominent Enter Button
                 Button(

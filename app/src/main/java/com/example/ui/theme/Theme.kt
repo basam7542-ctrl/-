@@ -1,6 +1,5 @@
 package com.example.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -12,53 +11,58 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = TextDark,
     primaryContainer = GoldContainer,
     onPrimaryContainer = GoldLight,
-    secondary = GoldSecondary,
+    secondary = ElectricBlue,
     onSecondary = TextDark,
-    secondaryContainer = NavySurfaceElevated,
-    onSecondaryContainer = GoldLight,
-    background = NavyDarkBackground,
+    secondaryContainer = ElectricBlueContainer,
+    onSecondaryContainer = ElectricBlue,
+    tertiary = GoldSecondary,
+    onTertiary = TextDark,
+    tertiaryContainer = GoldContainer,
+    onTertiaryContainer = GoldLight,
+    background = CharcoalBackground,
+    onBackground = TextWhite,
+    surface = NavySurface,
+    onSurface = TextWhite,
+    surfaceVariant = NavySurfaceVariant,
+    onSurfaceVariant = TextMuted,
+    surfaceTint = GoldPrimary,
+    outline = NavyCardBorder,
+    outlineVariant = GlassBorder,
+    error = ErrorRed,
+    onError = Color.White,
+    errorContainer = ErrorRedContainer,
+    onErrorContainer = Color(0xFFFCA5A5)
+)
+
+private val LightColorScheme = darkColorScheme(
+    primary = GoldPrimary,
+    onPrimary = TextDark,
+    primaryContainer = GoldContainer,
+    onPrimaryContainer = GoldLight,
+    secondary = ElectricBlue,
+    onSecondary = TextDark,
+    secondaryContainer = ElectricBlueContainer,
+    onSecondaryContainer = ElectricBlue,
+    background = CharcoalBackground,
     onBackground = TextWhite,
     surface = NavySurface,
     onSurface = TextWhite,
     surfaceVariant = NavySurfaceVariant,
     onSurfaceVariant = TextMuted,
     outline = NavyCardBorder,
-    outlineVariant = NavySurfaceVariant,
-    error = ErrorRed,
-    onError = Color.White
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = GoldDark,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFFEF3C7),
-    onPrimaryContainer = Color(0xFF78350F),
-    secondary = GoldPrimary,
-    onSecondary = TextDark,
-    secondaryContainer = Color(0xFFF1F5F9),
-    onSecondaryContainer = Color(0xFF0F172A),
-    background = Color(0xFFF8FAFC),
-    onBackground = Color(0xFF0F172A),
-    surface = Color.White,
-    onSurface = Color(0xFF0F172A),
-    surfaceVariant = Color(0xFFE2E8F0),
-    onSurfaceVariant = Color(0xFF475569),
-    outline = Color(0xFFCBD5E1),
-    outlineVariant = Color(0xFFE2E8F0),
+    outlineVariant = GlassBorder,
     error = ErrorRed,
     onError = Color.White
 )
 
 @Composable
 fun MyApplicationTheme(
-    darkTheme: Boolean = true, // Default to stunning luxury navy & gold dark theme
-    dynamicColor: Boolean = false, // Keep distinct Al-Bashiri Navy & Gold identity
+    darkTheme: Boolean = true, // Exclusively luxury dark charcoal & gold corporate aesthetic
+    dynamicColor: Boolean = false, // Keep distinct Al-Bashiri signature identity
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = DarkColorScheme,
         typography = Typography,
         content = content
     )

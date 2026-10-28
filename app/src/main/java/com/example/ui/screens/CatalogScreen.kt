@@ -27,15 +27,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Kitchen
 import androidx.compose.material.icons.filled.LocalLaundryService
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Microwave
 import androidx.compose.material.icons.filled.OutdoorGrill
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Recycling
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WaterDrop
@@ -43,6 +50,10 @@ import androidx.compose.material.icons.filled.WindPower
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.graphics.Brush
+import java.text.SimpleDateFormat
+import java.util.Date
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -80,10 +91,13 @@ import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Inventory2
+import com.example.ui.theme.CharcoalBackground
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.ElectricBlueContainer
 import com.example.ui.theme.ErrorRed
+import com.example.ui.theme.GlassBorder
 import com.example.ui.theme.GoldBorderGlow
+import com.example.ui.theme.GoldContainer
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.GoldSecondary
 import com.example.ui.theme.NavyCardBorder
@@ -387,7 +401,9 @@ fun CatalogScreen(
                             )
                         }
                     } else {
-                        LazyColumn(
+                        LazyVerticalGrid(
+                            columns = GridCells.Adaptive(minSize = 150.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
@@ -399,41 +415,72 @@ fun CatalogScreen(
                                         .clickable { onSelectProduct(product) }
                                         .testTag("product_item_${product.id}"),
                                     colors = CardDefaults.cardColors(containerColor = NavySurface),
-                                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(NavyCardBorder)),
-                                    shape = RoundedCornerShape(12.dp)
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder),
+                                    shape = RoundedCornerShape(14.dp)
                                 ) {
-                                    Row(
+                                    Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(14.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                        horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = product.name,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = TextWhite
-                                            )
-                                            Text(
-                                                text = "$modelsCount موديل / مقاس متوفر",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = GoldSecondary
+                                        Box(
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .clip(CircleShape)
+                                                .background(GoldContainer)
+                                                .border(1.dp, GoldPrimary, CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Devices,
+                                                contentDescription = null,
+                                                tint = GoldPrimary,
+                                                modifier = Modifier.size(22.dp)
                                             )
                                         }
 
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            if (isAdmin) {
-                                                IconButton(onClick = { onDeleteProduct(product.id) }) {
-                                                    Icon(Icons.Default.Delete, contentDescription = "حذف", tint = ErrorRed)
-                                                }
-                                            }
-                                            Icon(
-                                                Icons.AutoMirrored.Filled.ArrowBack, // In RTL, back arrow points left into the next level
-                                                contentDescription = "عرض الموديلات",
-                                                tint = GoldPrimary
+                                        Spacer(modifier = Modifier.height(10.dp))
+
+                                        Text(
+                                            text = product.name,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextWhite,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(ElectricBlueContainer)
+                                                .padding(horizontal = 7.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = "$modelsCount موديل متوفر",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = ElectricBlue,
+                                                fontSize = 10.sp
                                             )
+                                        }
+
+                                        if (isAdmin) {
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            IconButton(
+                                                onClick = { onDeleteProduct(product.id) },
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    contentDescription = "حذف المنتج",
+                                                    tint = ErrorRed,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -566,107 +613,373 @@ fun CatalogScreen(
                         }
                     }
 
-                // LEVEL 1: Top-level Categories (أقسام المنتجات)
+                // LEVEL 1: Top-level Categories & Executive Home Dashboard
                 } else {
                     val totalModelsCount = models.size
+                    val totalUnitsCount = models.sumOf { it.stockQuantity }
                     val lowStockCount = models.count { it.stockQuantity <= 2 }
+                    val healthyCoveragePercent = if (models.isNotEmpty()) {
+                        ((models.size - lowStockCount) * 100 / models.size)
+                    } else 100
 
-                    // Luxury Quick Dashboard Overview
+                    val todayFormatted = remember {
+                        SimpleDateFormat("EEEE، d MMMM yyyy", Locale("ar", "EG")).format(Date())
+                    }
+
+                    // 1. Executive Welcome & Shift Info Card
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp),
+                        colors = CardDefaults.cardColors(containerColor = NavySurfaceElevated),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .clip(CircleShape)
+                                        .background(GoldContainer)
+                                        .border(1.2.dp, GoldPrimary, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = currentUser.displayName.take(1),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = GoldPrimary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "أهلاً بك يا ${currentUser.displayName}",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextWhite
+                                    )
+                                    Text(
+                                        text = if (isAdmin) "مدير النظام • مركز العمليات الرئيسي" else "بائع معتمد • تصفح الأسعار والبيع",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = GoldSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+
+                            // Today's Date Chip
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(CharcoalBackground)
+                                    .border(0.6.dp, GlassBorder, RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = ElectricBlue, modifier = Modifier.size(13.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = todayFormatted,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextMuted,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Operational Shortcuts Hub
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 12.dp),
+                            .padding(bottom = 10.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Stat 1: Total Models
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            colors = CardDefaults.cardColors(containerColor = NavySurface),
-                            shape = RoundedCornerShape(12.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, NavyCardBorder)
+                        // Shortcut 1: Quick Sale
+                        val firstAvailableModel = models.firstOrNull { it.stockQuantity > 0 }
+                        Button(
+                            onClick = { if (firstAvailableModel != null) onOpenSale(firstAvailableModel) },
+                            enabled = firstAvailableModel != null,
+                            colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary, contentColor = TextDark),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f).height(38.dp)
                         ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Devices, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(15.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("الموديلات", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "$totalModelsCount جهاز",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = GoldPrimary
-                                )
+                            Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(15.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("بيع سريع", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        }
+
+                        // Shortcut 2: Add Department (Admin)
+                        if (isAdmin) {
+                            androidx.compose.material3.OutlinedButton(
+                                onClick = { showAddCategoryDialog = true },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = ElectricBlue),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, ElectricBlue.copy(alpha = 0.7f)),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.weight(1f).height(38.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("إضافة قسم", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                             }
                         }
 
-                        // Stat 2: Brands & Categories
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            colors = CardDefaults.cardColors(containerColor = NavySurface),
-                            shape = RoundedCornerShape(12.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, NavyCardBorder)
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.GridView, contentDescription = null, tint = ElectricBlue, modifier = Modifier.size(15.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("التصنيفات", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "${categories.size} أقسام / ${brands.size} شركة",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = ElectricBlue
+                        // Shortcut 3: Stock status badge
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (lowStockCount > 0) WarningAmber.copy(alpha = 0.15f) else SuccessGreen.copy(alpha = 0.15f))
+                                .border(
+                                    1.dp,
+                                    if (lowStockCount > 0) WarningAmber.copy(alpha = 0.6f) else SuccessGreen.copy(alpha = 0.6f),
+                                    RoundedCornerShape(10.dp)
                                 )
-                            }
-                        }
-
-                        // Stat 3: Stock Status
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            colors = CardDefaults.cardColors(containerColor = if (lowStockCount > 0) WarningAmber.copy(alpha = 0.1f) else NavySurface),
-                            shape = RoundedCornerShape(12.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                if (lowStockCount > 0) WarningAmber.copy(alpha = 0.5f) else NavyCardBorder
-                            )
+                                .padding(horizontal = 8.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        if (lowStockCount > 0) Icons.Default.Warning else Icons.Default.Inventory2,
-                                        contentDescription = null,
-                                        tint = if (lowStockCount > 0) WarningAmber else SuccessGreen,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("حالة المخزن", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    if (lowStockCount > 0) Icons.Default.Warning else Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = if (lowStockCount > 0) WarningAmber else SuccessGreen,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = if (lowStockCount > 0) "$lowStockCount أوشك على النفاد" else "مكتمل وآمن",
-                                    style = MaterialTheme.typography.labelLarge,
+                                    text = if (lowStockCount > 0) "$lowStockCount نواقص" else "المخزن سليم",
                                     fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
                                     color = if (lowStockCount > 0) WarningAmber else SuccessGreen
                                 )
                             }
                         }
                     }
 
+                    // 3. Asymmetrical Executive KPI Dashboard
+                    // Hero Card: Total Store Inventory Capacity & Readiness
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp),
+                        colors = CardDefaults.cardColors(containerColor = NavySurfaceElevated),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GoldBorderGlow),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(GoldContainer)
+                                            .border(1.dp, GoldPrimary, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.Inventory2, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(18.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text("الرصيد الفعلي الإجمالي بالمخزن", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                        Text(
+                                            text = "${numberFormat.format(totalUnitsCount)} قطعة متوفرة",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = GoldPrimary
+                                        )
+                                    }
+                                }
+
+                                // Model count badge
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(ElectricBlueContainer)
+                                        .border(0.8.dp, ElectricBlue.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "$totalModelsCount موديل مسجل",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = ElectricBlue
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            // Stock readiness progress bar
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("جاهزية وتغطية المعروض", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
+                                Text("$healthyCoveragePercent% متوفر", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = if (healthyCoveragePercent > 80) SuccessGreen else WarningAmber, fontSize = 10.sp)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            LinearProgressIndicator(
+                                progress = { (healthyCoveragePercent / 100f).coerceIn(0f, 1f) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = if (healthyCoveragePercent > 80) GoldPrimary else WarningAmber,
+                                trackColor = CharcoalBackground
+                            )
+                        }
+                    }
+
+                    // Two Secondary Split KPI Cards
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Sub-card 1: Active Departments & Brands
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(containerColor = NavySurface),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(ElectricBlue.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.GridView, contentDescription = null, tint = ElectricBlue, modifier = Modifier.size(15.dp))
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text("الأقسام والشركات", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                    Text(
+                                        text = "${categories.size} أقسام / ${brands.size} شركة",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextWhite
+                                    )
+                                }
+                            }
+                        }
+
+                        // Sub-card 2: Critical alerts count
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(containerColor = if (lowStockCount > 0) WarningAmber.copy(alpha = 0.12f) else NavySurface),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (lowStockCount > 0) WarningAmber.copy(alpha = 0.6f) else GlassBorder
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(if (lowStockCount > 0) WarningAmber.copy(alpha = 0.2f) else SuccessGreen.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        if (lowStockCount > 0) Icons.Default.Warning else Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = if (lowStockCount > 0) WarningAmber else SuccessGreen,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text("النواقص الحرجة", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                    Text(
+                                        text = if (lowStockCount > 0) "$lowStockCount جهاز يلزم توريده" else "المخزن مكتمل تماماً",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (lowStockCount > 0) WarningAmber else SuccessGreen
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // 4. Live Stock Alert Banner
+                    if (lowStockCount > 0) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 10.dp),
+                            colors = CardDefaults.cardColors(containerColor = WarningAmber.copy(alpha = 0.12f)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, WarningAmber.copy(alpha = 0.7f)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "تنبيه إدارة المخزون: يوجد $lowStockCount جهاز أوشك على النفاد (<= 2 قطعة)، يرجى مراجعة طلبات التوريد.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = WarningAmber,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+
+                    // 5. Modern Category Grid Showcase
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "أقسام الأجهزة الكهربائية (${categories.size})",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextWhite
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(GoldPrimary)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "أقسام الأجهزة المعتمدة (${categories.size})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextWhite
+                            )
+                        }
                         if (isAdmin) {
                             Button(
                                 onClick = { showAddCategoryDialog = true },
@@ -674,25 +987,25 @@ fun CatalogScreen(
                                     containerColor = GoldPrimary,
                                     contentColor = TextDark
                                 ),
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(15.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("إضافة قسم", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text("إضافة قسم", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
+                        columns = GridCells.Adaptive(minSize = 150.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(categories, key = { it.id }) { cat ->
                             val catBrandsCount = brands.count { it.categoryId == cat.id }
+                            val catModelsCount = models.count { it.categoryName == cat.name }
                             val icon = getCategoryIcon(cat.iconType)
 
                             Card(
@@ -700,30 +1013,49 @@ fun CatalogScreen(
                                     .fillMaxWidth()
                                     .clickable { onSelectCategory(cat) }
                                     .testTag("category_item_${cat.id}"),
-                                colors = CardDefaults.cardColors(containerColor = NavySurface),
-                                border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(NavyCardBorder)),
+                                colors = CardDefaults.cardColors(containerColor = NavySurfaceElevated),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder),
                                 shape = RoundedCornerShape(14.dp)
                             ) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                        .padding(12.dp)
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(54.dp)
-                                            .clip(CircleShape)
-                                            .background(NavySurfaceElevated)
-                                            .border(1.5.dp, GoldPrimary, CircleShape),
-                                        contentAlignment = Alignment.Center
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.Top
                                     ) {
-                                        Icon(
-                                            imageVector = icon,
-                                            contentDescription = null,
-                                            tint = GoldPrimary,
-                                            modifier = Modifier.size(28.dp)
-                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(GoldContainer)
+                                                .border(1.2.dp, GoldPrimary, RoundedCornerShape(12.dp)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = icon,
+                                                contentDescription = null,
+                                                tint = GoldPrimary,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+
+                                        if (isAdmin) {
+                                            IconButton(
+                                                onClick = { onDeleteCategory(cat.id) },
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    contentDescription = "حذف القسم",
+                                                    tint = ErrorRed.copy(alpha = 0.8f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
                                     }
 
                                     Spacer(modifier = Modifier.height(10.dp))
@@ -737,25 +1069,23 @@ fun CatalogScreen(
                                         overflow = TextOverflow.Ellipsis
                                     )
 
-                                    Text(
-                                        text = "$catBrandsCount شركات متوفرة",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = GoldSecondary
-                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
 
-                                    if (isAdmin) {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        IconButton(
-                                            onClick = { onDeleteCategory(cat.id) },
-                                            modifier = Modifier.size(28.dp)
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Delete,
-                                                contentDescription = "حذف القسم",
-                                                tint = ErrorRed,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "$catBrandsCount شركات",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = ElectricBlue
+                                        )
+                                        Text(
+                                            text = "$catModelsCount موديل",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = GoldSecondary
+                                        )
                                     }
                                 }
                             }

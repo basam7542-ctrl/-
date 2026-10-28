@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Recycling
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Store
@@ -81,10 +82,13 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.data.local.UserAccountEntity
 import com.example.ui.components.BluetoothPrinterChooserDialog
-import com.example.ui.theme.ErrorRed
-import androidx.compose.material.icons.filled.Recycling
+import com.example.ui.theme.CharcoalBackground
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.ElectricBlueContainer
+import com.example.ui.theme.ErrorRed
+import com.example.ui.theme.GlassBorder
+import com.example.ui.theme.GoldBorderGlow
+import com.example.ui.theme.GoldContainer
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.GoldSecondary
 import com.example.ui.theme.NavyCardBorder
@@ -194,7 +198,7 @@ fun SettingsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyDarkBackground)
+            .background(CharcoalBackground)
     ) {
         Column(
             modifier = Modifier
@@ -203,12 +207,12 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // User Header Profile Card
+            // User Header Profile Card - Executive Styling
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = NavySurface),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(NavyCardBorder)),
-                shape = RoundedCornerShape(14.dp)
+                colors = CardDefaults.cardColors(containerColor = NavySurfaceElevated),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GoldBorderGlow),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -218,10 +222,10 @@ fun SettingsScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(50.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(NavySurfaceElevated)
-                            .border(1.5.dp, GoldPrimary, RoundedCornerShape(12.dp)),
+                            .size(52.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(GoldContainer)
+                            .border(1.5.dp, GoldPrimary, androidx.compose.foundation.shape.CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -235,16 +239,34 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.width(14.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = currentUser.displayName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = TextWhite
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (isAdmin) GoldPrimary.copy(alpha = 0.2f) else ElectricBlueContainer)
+                                    .border(0.6.dp, if (isAdmin) GoldPrimary else ElectricBlue, RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = if (isAdmin) "مدير" else "بائع",
+                                    color = if (isAdmin) GoldPrimary else ElectricBlue,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                         Text(
-                            text = currentUser.displayName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextWhite
-                        )
-                        Text(
-                            text = if (isAdmin) "مدير النظام (كامل الصلاحيات)" else "بائع (صلاحية تصفح الأسعار وتسجيل البيع)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = GoldSecondary
+                            text = if (isAdmin) "صلاحيات كاملة لإدارة النظام، الأسعار، والمخزون" else "صلاحية استعراض الأسعار وتنفيذ المبيعات",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GoldSecondary,
+                            fontSize = 10.sp
                         )
                     }
                 }

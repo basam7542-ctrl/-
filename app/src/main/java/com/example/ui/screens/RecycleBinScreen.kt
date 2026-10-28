@@ -67,10 +67,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.RecycleBinItemEntity
 import com.example.data.local.UserAccountEntity
+import com.example.ui.theme.CharcoalBackground
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.ElectricBlueContainer
 import com.example.ui.theme.ErrorRed
 import com.example.ui.theme.GlassBorder
+import com.example.ui.theme.GoldBorderGlow
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.GoldSecondary
 import com.example.ui.theme.NavyCardBorder
@@ -134,7 +136,7 @@ fun RecycleBinScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyDarkBackground)
+            .background(CharcoalBackground)
             .padding(16.dp)
             .testTag("recycle_bin_screen")
     ) {
