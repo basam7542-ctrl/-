@@ -39,11 +39,25 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import com.example.data.local.ExpenseCategoryEntity
+import com.example.data.local.ExpenseEntity
+import com.example.data.local.FinancialAdjustmentEntity
+import com.example.data.local.TreasuryTransactionEntity
+import com.example.data.repository.FinancialSummaryReport
+import com.example.ui.screens.financial.ExpensesTabContent
+import com.example.ui.screens.financial.FinancialReportsTabContent
+import com.example.ui.screens.financial.ManageExpenseCategoriesDialog
+import com.example.ui.screens.financial.RecordExpenseDialog
+import com.example.ui.screens.financial.RecordFinancialAdjustmentDialog
+import com.example.ui.screens.financial.RecordTreasuryTxDialog
+import com.example.ui.screens.financial.ReverseTransactionDialog
+import com.example.ui.screens.financial.TreasuryTabContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -109,6 +123,11 @@ fun AccountsScreen(
     suppliers: List<SupplierAccountEntity>,
     merchants: List<MerchantAccountEntity>,
     customers: List<CustomerAccountEntity> = emptyList(),
+    treasuryTransactions: List<TreasuryTransactionEntity> = emptyList(),
+    expenseCategories: List<ExpenseCategoryEntity> = emptyList(),
+    expenses: List<ExpenseEntity> = emptyList(),
+    financialAdjustments: List<FinancialAdjustmentEntity> = emptyList(),
+    financialSummary: FinancialSummaryReport = FinancialSummaryReport(),
     onAddSupplier: (name: String, phone: String, initialPurchases: Double, notes: String) -> Unit,
     onAddSupplierTransaction: (supplierId: Long, type: String, amount: Double, notes: String) -> Unit,
     onUpdateSupplierTransaction: (transactionId: Long, type: String, amount: Double, notes: String) -> Unit,
@@ -124,6 +143,18 @@ fun AccountsScreen(
     onUpdateCustomerTransaction: (transactionId: Long, type: String, amount: Double, productDescription: String, notes: String) -> Unit = { _, _, _, _, _ -> },
     onDeleteCustomerTransaction: (transactionId: Long) -> Unit = {},
     onDeleteCustomer: (customerId: Long) -> Unit = {},
+    onRecordTreasuryTransaction: (type: String, category: String, amount: Double, referenceType: String, partyName: String, paymentMethod: String, description: String) -> Unit = { _, _, _, _, _, _, _ -> },
+    onReverseTreasuryTransaction: (transactionId: Long, reason: String) -> Unit = { _, _ -> },
+    onRecordExpense: (categoryName: String, amount: Double, description: String, beneficiary: String, paymentMethod: String, referenceNumber: String, notes: String) -> Unit = { _, _, _, _, _, _, _ -> },
+    onReverseExpense: (expenseId: Long, reason: String) -> Unit = { _, _ -> },
+    onAddExpenseCategory: (name: String, description: String) -> Unit = { _, _ -> },
+    onDeleteExpenseCategory: (id: Long) -> Unit = {},
+    onRecordFinancialAdjustment: (targetAccountType: String, targetAccountId: Long?, targetAccountName: String, adjustmentType: String, amount: Double, reason: String) -> Unit = { _, _, _, _, _, _ -> },
+    onRefreshFinancialSummary: (startDate: Long?, endDate: Long?) -> Unit = { _, _ -> },
+    onExportTreasuryLedger: () -> String = { "" },
+    onExportExpenses: () -> String = { "" },
+    onExportFinancialReport: () -> String = { "" },
+    onShareCsv: (title: String, csvContent: String) -> Unit = { _, _ -> },
     getSupplierTransactionsFlow: (Long) -> StateFlow<List<SupplierTransactionEntity>>,
     getMerchantTransactionsFlow: (Long) -> StateFlow<List<MerchantTransactionEntity>>,
     getCustomerTransactionsFlow: (Long) -> StateFlow<List<CustomerTransactionEntity>> = { MutableStateFlow(emptyList()) }
@@ -133,11 +164,22 @@ fun AccountsScreen(
     val numberFormat = remember { NumberFormat.getNumberInstance(Locale("ar", "EG")) }
     val dateFormat = remember { SimpleDateFormat("yyyy/MM/dd - hh:mm a", Locale("ar", "EG")) }
 
-    var selectedTabIndex by remember { mutableIntStateOf(0) } // 0: Suppliers, 1: Merchants, 2: Customers
+    var selectedTabIndex by remember { mutableIntStateOf(0) } // 0: Suppliers, 1: Merchants, 2: Customers, 3: Treasury, 4: Expenses, 5: Reports
 
     var showAddSupplierDialog by remember { mutableStateOf(false) }
     var showAddMerchantDialog by remember { mutableStateOf(false) }
     var showAddCustomerDialog by remember { mutableStateOf(false) }
+
+    // Financial Dialog States
+    var showRecordTreasuryDialog by remember { mutableStateOf(false) }
+    var recordTxInitialType by remember { mutableStateOf("CASH_IN") }
+    var showRecordExpenseDialog by remember { mutableStateOf(false) }
+    var showManageExpenseCategoriesDialog by remember { mutableStateOf(false) }
+    var showFinancialAdjustmentDialog by remember { mutableStateOf(false) }
+    var reversingTreasuryTxId by remember { mutableStateOf<Long?>(null) }
+    var reversingTreasuryTxText by remember { mutableStateOf("") }
+    var reversingExpenseId by remember { mutableStateOf<Long?>(null) }
+    var reversingExpenseNumber by remember { mutableStateOf("") }
 
     var detailedSupplierId by remember { mutableStateOf<Long?>(null) }
     var detailedMerchantId by remember { mutableStateOf<Long?>(null) }
@@ -176,10 +218,11 @@ fun AccountsScreen(
                 .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
             // Tabs Row
-            TabRow(
+            ScrollableTabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = NavySurface,
                 contentColor = GoldPrimary,
+                edgePadding = 6.dp,
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
                         Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
@@ -195,7 +238,7 @@ fun AccountsScreen(
                     onClick = { selectedTabIndex = 0 },
                     text = {
                         Text(
-                            text = "كشوف حسابات الموردين (${suppliers.size})",
+                            text = "الموردين (${suppliers.size})",
                             fontWeight = FontWeight.Bold,
                             color = if (selectedTabIndex == 0) GoldPrimary else TextMuted
                         )
@@ -206,7 +249,7 @@ fun AccountsScreen(
                     onClick = { selectedTabIndex = 1 },
                     text = {
                         Text(
-                            text = "تجار الجملة (${merchants.size})",
+                            text = "التجار (${merchants.size})",
                             fontWeight = FontWeight.Bold,
                             color = if (selectedTabIndex == 1) GoldPrimary else TextMuted
                         )
@@ -217,9 +260,42 @@ fun AccountsScreen(
                     onClick = { selectedTabIndex = 2 },
                     text = {
                         Text(
-                            text = "آجل بالخارج (${customers.size})",
+                            text = "العملاء (${customers.size})",
                             fontWeight = FontWeight.Bold,
                             color = if (selectedTabIndex == 2) GoldPrimary else TextMuted
+                        )
+                    }
+                )
+                Tab(
+                    selected = selectedTabIndex == 3,
+                    onClick = { selectedTabIndex = 3 },
+                    text = {
+                        Text(
+                            text = "الخزينة النقدية",
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedTabIndex == 3) GoldPrimary else TextMuted
+                        )
+                    }
+                )
+                Tab(
+                    selected = selectedTabIndex == 4,
+                    onClick = { selectedTabIndex = 4 },
+                    text = {
+                        Text(
+                            text = "المصروفات (${expenses.size})",
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedTabIndex == 4) GoldPrimary else TextMuted
+                        )
+                    }
+                )
+                Tab(
+                    selected = selectedTabIndex == 5,
+                    onClick = { selectedTabIndex = 5 },
+                    text = {
+                        Text(
+                            text = "التقارير والتدفقات",
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedTabIndex == 5) GoldPrimary else TextMuted
                         )
                     }
                 )
@@ -551,7 +627,7 @@ fun AccountsScreen(
                     }
                 }
             // Tab 3: RETAIL CUSTOMERS (عملاء التجزئة بالأجل)
-            } else {
+            } else if (selectedTabIndex == 2) {
                 val totalCreditSales = customers.sumOf { it.totalCreditSales }
                 val totalCollected = customers.sumOf { it.totalCollected }
                 val totalRemainingDueToMe = customers.sumOf { it.remainingDueToMe }
@@ -725,6 +801,55 @@ fun AccountsScreen(
                         }
                     }
                 }
+            } else if (selectedTabIndex == 3) {
+                // Tab 4: TREASURY (الخزينة النقدية)
+                TreasuryTabContent(
+                    isAdmin = isAdmin,
+                    transactions = treasuryTransactions,
+                    onRecordTransactionClick = { initialType ->
+                        recordTxInitialType = initialType
+                        showRecordTreasuryDialog = true
+                    },
+                    onAdjustmentClick = { showFinancialAdjustmentDialog = true },
+                    onReverseClick = { txId, refText ->
+                        reversingTreasuryTxId = txId
+                        reversingTreasuryTxText = refText
+                    },
+                    onExportCsv = {
+                        val csv = onExportTreasuryLedger()
+                        onShareCsv("دفتر_الخزينة_النقدية.csv", csv)
+                    }
+                )
+            } else if (selectedTabIndex == 4) {
+                // Tab 5: EXPENSES (المصروفات)
+                ExpensesTabContent(
+                    isAdmin = isAdmin,
+                    expenses = expenses,
+                    categories = expenseCategories,
+                    onRecordExpenseClick = { showRecordExpenseDialog = true },
+                    onManageCategoriesClick = { showManageExpenseCategoriesDialog = true },
+                    onReverseExpenseClick = { expId, expNum ->
+                        reversingExpenseId = expId
+                        reversingExpenseNumber = expNum
+                    },
+                    onExportCsv = {
+                        val csv = onExportExpenses()
+                        onShareCsv("سجل_المصروفات_الإدارية.csv", csv)
+                    }
+                )
+            } else if (selectedTabIndex == 5) {
+                // Tab 6: FINANCIAL REPORTS & CASH FLOW (التقارير المالية والتدفقات)
+                FinancialReportsTabContent(
+                    isAdmin = isAdmin,
+                    report = financialSummary,
+                    adjustments = financialAdjustments,
+                    onFilterPeriod = { start, end -> onRefreshFinancialSummary(start, end) },
+                    onAdjustmentClick = { showFinancialAdjustmentDialog = true },
+                    onExportCsv = {
+                        val csv = onExportFinancialReport()
+                        onShareCsv("التقرير_المالي_الشامل.csv", csv)
+                    }
+                )
             }
         }
     }
@@ -1881,6 +2006,75 @@ fun AccountsScreen(
                 OutlinedButton(onClick = { customerToDelete = null }) {
                     Text("إلغاء", color = TextWhite)
                 }
+            }
+        )
+    }
+
+    // --- Financial Dialogs ---
+    if (showRecordTreasuryDialog) {
+        RecordTreasuryTxDialog(
+            initialType = recordTxInitialType,
+            onDismiss = { showRecordTreasuryDialog = false },
+            onConfirm = { type, category, amount, partyName, paymentMethod, description ->
+                onRecordTreasuryTransaction(type, category, amount, "MANUAL", partyName, paymentMethod, description)
+                showRecordTreasuryDialog = false
+            }
+        )
+    }
+
+    if (showRecordExpenseDialog) {
+        RecordExpenseDialog(
+            categories = expenseCategories,
+            onDismiss = { showRecordExpenseDialog = false },
+            onConfirm = { categoryName, amount, description, beneficiary, paymentMethod, referenceNumber, notes ->
+                onRecordExpense(categoryName, amount, description, beneficiary, paymentMethod, referenceNumber, notes)
+                showRecordExpenseDialog = false
+            }
+        )
+    }
+
+    if (showManageExpenseCategoriesDialog) {
+        ManageExpenseCategoriesDialog(
+            categories = expenseCategories,
+            onDismiss = { showManageExpenseCategoriesDialog = false },
+            onAddCategory = { name, desc -> onAddExpenseCategory(name, desc) },
+            onDeleteCategory = { id -> onDeleteExpenseCategory(id) }
+        )
+    }
+
+    if (showFinancialAdjustmentDialog) {
+        RecordFinancialAdjustmentDialog(
+            suppliers = suppliers,
+            merchants = merchants,
+            customers = customers,
+            onDismiss = { showFinancialAdjustmentDialog = false },
+            onConfirm = { targetType, targetId, targetName, adjType, amount, reason ->
+                onRecordFinancialAdjustment(targetType, targetId, targetName, adjType, amount, reason)
+                showFinancialAdjustmentDialog = false
+            }
+        )
+    }
+
+    if (reversingTreasuryTxId != null) {
+        ReverseTransactionDialog(
+            title = "إلغاء حركة خزينة بحركة عكسية",
+            targetNumber = reversingTreasuryTxText,
+            onDismiss = { reversingTreasuryTxId = null },
+            onConfirm = { reason ->
+                onReverseTreasuryTransaction(reversingTreasuryTxId!!, reason)
+                reversingTreasuryTxId = null
+            }
+        )
+    }
+
+    if (reversingExpenseId != null) {
+        ReverseTransactionDialog(
+            title = "إلغاء مصروف بحركة عكسية",
+            targetNumber = reversingExpenseNumber,
+            onDismiss = { reversingExpenseId = null },
+            onConfirm = { reason ->
+                onReverseExpense(reversingExpenseId!!, reason)
+                reversingExpenseId = null
             }
         )
     }

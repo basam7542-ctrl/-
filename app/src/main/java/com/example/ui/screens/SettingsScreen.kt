@@ -9,7 +9,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,19 +32,25 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothSearching
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Recycling
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Store
@@ -72,14 +80,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.example.R
 import com.example.data.local.UserAccountEntity
 import com.example.ui.components.BluetoothPrinterChooserDialog
 import com.example.ui.theme.CharcoalBackground
@@ -102,6 +114,8 @@ import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextWhite
 import com.example.ui.theme.WarningAmber
 import com.example.utils.BluetoothPrinterHelper
+import com.example.utils.StoreProfile
+import com.example.utils.StoreProfileManager
 
 @Composable
 fun SettingsScreen(
@@ -124,6 +138,10 @@ fun SettingsScreen(
     onPrintTestReceipt: ((Boolean, String) -> Unit) -> Unit,
     recycleBinCount: Int = 0,
     onNavigateToRecycleBin: () -> Unit = {},
+    storeProfile: StoreProfile = StoreProfile(),
+    onUpdateStoreProfile: (StoreProfile) -> Unit = {},
+    onUploadLogo: (android.net.Uri) -> Unit = {},
+    onResetLogo: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -137,6 +155,24 @@ fun SettingsScreen(
     var passwordChangeError by remember { mutableStateOf<String?>(null) }
 
     var backupCopiedSuccess by remember { mutableStateOf(false) }
+
+    // Showroom, Legal & Tax Profile State
+    var profileStoreNameInput by remember(storeProfile.storeName) { mutableStateOf(storeProfile.storeName) }
+    var profileAddressInput by remember(storeProfile.storeAddress) { mutableStateOf(storeProfile.storeAddress) }
+    var profilePhoneInput by remember(storeProfile.storePhone) { mutableStateOf(storeProfile.storePhone) }
+    var profileCrInput by remember(storeProfile.commercialRegister) { mutableStateOf(storeProfile.commercialRegister) }
+    var profileTaxCardInput by remember(storeProfile.taxCard) { mutableStateOf(storeProfile.taxCard) }
+    var profileVatInput by remember(storeProfile.vatNumber) { mutableStateOf(storeProfile.vatNumber) }
+    var storeProfileSavedSuccess by remember { mutableStateOf(false) }
+
+    val logoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            onUploadLogo(uri)
+            storeProfileSavedSuccess = false
+        }
+    }
 
     // Selected user for custom greeting configuration (Admin can switch between all 4 users; Seller sees self)
     val userList = if (allUsers.isNotEmpty()) {
@@ -348,6 +384,498 @@ fun SettingsScreen(
                         tint = GoldSecondary,
                         modifier = Modifier.size(20.dp)
                     )
+                }
+            }
+
+            // SECTION: Showroom, Legal & Tax Information
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("showroom_legal_tax_card"),
+                colors = CardDefaults.cardColors(containerColor = NavySurface),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GoldBorderGlow),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(GoldContainer)
+                                    .border(1.dp, GoldPrimary, RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Business,
+                                    contentDescription = null,
+                                    tint = GoldPrimary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "بيانات المعرض والبيانات القانونية والضريبية",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextWhite
+                                )
+                                Text(
+                                    text = "تُدرج تلقائياً في رأس جميع فواتير البيع وإيصالات الطباعة الحرارية",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextMuted,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        if (!isAdmin) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(NavySurfaceElevated)
+                                    .border(0.8.dp, GoldSecondary.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "للعرض فقط (المدير)",
+                                    color = GoldSecondary,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    if (isAdmin) {
+                        // Editable Form for Admin
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            // 1. Store Name
+                            Column {
+                                Text(
+                                    text = "1. اسم المعرض التجاري:",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldSecondary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                OutlinedTextField(
+                                    value = profileStoreNameInput,
+                                    onValueChange = {
+                                        profileStoreNameInput = it
+                                        storeProfileSavedSuccess = false
+                                    },
+                                    singleLine = true,
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Store, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(18.dp))
+                                    },
+                                    placeholder = { Text("مثال: البشيري للأجهزة الكهربائية", color = TextMuted) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = GoldPrimary,
+                                        unfocusedBorderColor = NavyCardBorder,
+                                        cursorColor = GoldPrimary,
+                                        focusedTextColor = TextWhite,
+                                        unfocusedTextColor = TextWhite
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("store_name_input")
+                                )
+                            }
+
+                            // 2. Store Address
+                            Column {
+                                Text(
+                                    text = "2. عنوان المعرض بالتفصيل:",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldSecondary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                OutlinedTextField(
+                                    value = profileAddressInput,
+                                    onValueChange = {
+                                        profileAddressInput = it
+                                        storeProfileSavedSuccess = false
+                                    },
+                                    singleLine = true,
+                                    leadingIcon = {
+                                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(18.dp))
+                                    },
+                                    placeholder = { Text("مثال: شارع الجمهورية - أمام المحطة - المنصورة", color = TextMuted) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = GoldPrimary,
+                                        unfocusedBorderColor = NavyCardBorder,
+                                        cursorColor = GoldPrimary,
+                                        focusedTextColor = TextWhite,
+                                        unfocusedTextColor = TextWhite
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("store_address_input")
+                                )
+                            }
+
+                            // 3. Store Phone
+                            Column {
+                                Text(
+                                    text = "3. رقم هاتف المعرض / الإدارة:",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldSecondary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                OutlinedTextField(
+                                    value = profilePhoneInput,
+                                    onValueChange = {
+                                        profilePhoneInput = it
+                                        storeProfileSavedSuccess = false
+                                    },
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Phone, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(18.dp))
+                                    },
+                                    placeholder = { Text("مثال: 01000000000", color = TextMuted) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = GoldPrimary,
+                                        unfocusedBorderColor = NavyCardBorder,
+                                        cursorColor = GoldPrimary,
+                                        focusedTextColor = TextWhite,
+                                        unfocusedTextColor = TextWhite
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("store_phone_input")
+                                )
+                            }
+
+                            // 4 & 5. Commercial Register & Tax Card
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "4. رقم السجل التجاري:",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = GoldSecondary
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    OutlinedTextField(
+                                        value = profileCrInput,
+                                        onValueChange = {
+                                            profileCrInput = it
+                                            storeProfileSavedSuccess = false
+                                        },
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        placeholder = { Text("مثال: 48921", color = TextMuted) },
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = GoldPrimary,
+                                            unfocusedBorderColor = NavyCardBorder,
+                                            cursorColor = GoldPrimary,
+                                            focusedTextColor = TextWhite,
+                                            unfocusedTextColor = TextWhite
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("store_cr_input")
+                                    )
+                                }
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "5. رقم البطاقة الضريبية:",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = GoldSecondary
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    OutlinedTextField(
+                                        value = profileTaxCardInput,
+                                        onValueChange = {
+                                            profileTaxCardInput = it
+                                            storeProfileSavedSuccess = false
+                                        },
+                                        singleLine = true,
+                                        placeholder = { Text("مثال: 712-340-908", color = TextMuted) },
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = GoldPrimary,
+                                            unfocusedBorderColor = NavyCardBorder,
+                                            cursorColor = GoldPrimary,
+                                            focusedTextColor = TextWhite,
+                                            unfocusedTextColor = TextWhite
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("store_tax_card_input")
+                                    )
+                                }
+                            }
+
+                            // 6. VAT Registration Number
+                            Column {
+                                Text(
+                                    text = "6. رقم التسجيل الضريبي (إن وجد):",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldSecondary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                OutlinedTextField(
+                                    value = profileVatInput,
+                                    onValueChange = {
+                                        profileVatInput = it
+                                        storeProfileSavedSuccess = false
+                                    },
+                                    singleLine = true,
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Badge, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(18.dp))
+                                    },
+                                    placeholder = { Text("اختياري - مثال: 300-123-456", color = TextMuted) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = GoldPrimary,
+                                        unfocusedBorderColor = NavyCardBorder,
+                                        cursorColor = GoldPrimary,
+                                        focusedTextColor = TextWhite,
+                                        unfocusedTextColor = TextWhite
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("store_vat_input")
+                                )
+                            }
+
+                            // 7. Store Logo Upload & Preview
+                            Column {
+                                Text(
+                                    text = "7. شعار المعرض المطبوع أعلى الفاتورة:",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldSecondary
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                val customLogo = remember(storeProfile.logoPath) {
+                                    StoreProfileManager.loadLogoBitmap(storeProfile.logoPath)
+                                }
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(NavySurfaceElevated)
+                                        .border(1.dp, NavyCardBorder, RoundedCornerShape(10.dp))
+                                        .padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(androidx.compose.ui.graphics.Color.White)
+                                            .border(1.dp, androidx.compose.ui.graphics.Color.Black, RoundedCornerShape(8.dp))
+                                            .padding(4.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (customLogo != null) {
+                                            Image(
+                                                bitmap = customLogo.asImageBitmap(),
+                                                contentDescription = "شعار المعرض المخصص",
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Fit
+                                            )
+                                        } else {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.ic_albashiri_invoice_logo),
+                                                contentDescription = "شعار المعرض الافتراضي",
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Fit
+                                            )
+                                        }
+                                    }
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = if (customLogo != null) "شعار مخصص تم رفعه بنجاح" else "الشعار الافتراضي لمؤسسة البشيري",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (customLogo != null) SuccessGreen else TextWhite
+                                        )
+                                        Text(
+                                            text = "شعار أحادي اللون مناسب للطباعة الحرارية بالأبيض والأسود",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = TextMuted,
+                                            fontSize = 10.sp
+                                        )
+
+                                        Spacer(modifier = Modifier.height(6.dp))
+
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Button(
+                                                onClick = {
+                                                    logoPickerLauncher.launch(
+                                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                                    )
+                                                },
+                                                colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary, contentColor = TextDark),
+                                                shape = RoundedCornerShape(8.dp),
+                                                modifier = Modifier.testTag("upload_logo_button")
+                                            ) {
+                                                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(text = if (customLogo != null) "تغيير الشعار" else "رفع شعار جديد", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                            }
+
+                                            if (storeProfile.logoPath.isNotBlank()) {
+                                                OutlinedButton(
+                                                    onClick = onResetLogo,
+                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GoldSecondary),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    modifier = Modifier.testTag("reset_logo_button")
+                                                ) {
+                                                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text(text = "استعادة الافتراضي", fontSize = 10.sp)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Save Button
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Button(
+                                onClick = {
+                                    onUpdateStoreProfile(
+                                        StoreProfile(
+                                            storeName = profileStoreNameInput.trim().ifBlank { StoreProfile.DEFAULT_STORE_NAME },
+                                            storeAddress = profileAddressInput.trim(),
+                                            storePhone = profilePhoneInput.trim(),
+                                            commercialRegister = profileCrInput.trim(),
+                                            taxCard = profileTaxCardInput.trim(),
+                                            vatNumber = profileVatInput.trim(),
+                                            logoPath = storeProfile.logoPath
+                                        )
+                                    )
+                                    storeProfileSavedSuccess = true
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary, contentColor = TextDark),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .testTag("save_store_profile_button")
+                            ) {
+                                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "حفظ بيانات المعرض والبيانات القانونية والضريبية",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 13.sp
+                                )
+                            }
+
+                            if (storeProfileSavedSuccess) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(SuccessGreen.copy(alpha = 0.15f))
+                                        .border(1.dp, SuccessGreen.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                        .padding(10.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "تم حفظ بيانات المعرض والبيانات القانونية والضريبية بنجاح، وستُدرج تلقائياً في جميع الفواتير الجديدة والمعاينة.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextWhite,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Read-Only Presentation for Sellers
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(NavySurfaceElevated)
+                                .border(1.dp, NavyCardBorder, RoundedCornerShape(10.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "بيانات المعرض الرسمية المعتمدة بالفواتير:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = GoldPrimary
+                            )
+                            Text(
+                                text = "• اسم المعرض: ${storeProfile.storeName}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextWhite
+                            )
+                            if (storeProfile.storeAddress.isNotBlank()) {
+                                Text(
+                                    text = "• العنوان: ${storeProfile.storeAddress}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextWhite
+                                )
+                            }
+                            if (storeProfile.storePhone.isNotBlank()) {
+                                Text(
+                                    text = "• هاتف المعرض: ${storeProfile.storePhone}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextWhite
+                                )
+                            }
+                            if (storeProfile.commercialRegister.isNotBlank()) {
+                                Text(
+                                    text = "• السجل التجاري: ${storeProfile.commercialRegister}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextWhite
+                                )
+                            }
+                            if (storeProfile.taxCard.isNotBlank()) {
+                                Text(
+                                    text = "• البطاقة الضريبية: ${storeProfile.taxCard}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextWhite
+                                )
+                            }
+                            if (storeProfile.vatNumber.isNotBlank()) {
+                                Text(
+                                    text = "• التسجيل الضريبي: ${storeProfile.vatNumber}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextWhite
+                                )
+                            }
+                            Text(
+                                text = "ملاحظة: تعديل أو إضافة بيانات المعرض والبيانات الضريبية متاح فقط لحساب المدير.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMuted,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
                 }
             }
 

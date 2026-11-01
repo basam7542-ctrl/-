@@ -18,6 +18,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -70,12 +73,14 @@ fun SaleDialog(
     model: ProductModelEntity,
     sellerName: String,
     onDismiss: () -> Unit,
-    onConfirmSale: (soldPrice: Double, quantity: Int, notes: String) -> Unit
+    onConfirmSale: (soldPrice: Double, quantity: Int, notes: String, customerName: String, customerPhone: String) -> Unit
 ) {
     val numberFormat = remember { NumberFormat.getNumberInstance(Locale("ar", "EG")) }
 
     var quantity by remember { mutableIntStateOf(1) }
     var priceText by remember { mutableStateOf(model.finalPrice.toInt().toString()) }
+    var customerName by remember { mutableStateOf("") }
+    var customerPhone by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -359,18 +364,77 @@ fun SaleDialog(
                     }
                 }
 
-                // Notes / Customer input
+                // Customer Details Section Header
+                Text(
+                    text = "بيانات المشتري / العميل للفاتورة:",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = GoldSecondary
+                )
+
+                // Customer Name Input
+                OutlinedTextField(
+                    value = customerName,
+                    onValueChange = { customerName = it },
+                    label = { Text("اسم العميل (اختياري)") },
+                    placeholder = { Text("مثال: الحاج محمد أحمد") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = null, tint = GoldSecondary, modifier = Modifier.size(18.dp))
+                    },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GoldPrimary,
+                        unfocusedBorderColor = NavyCardBorder,
+                        focusedLabelColor = GoldPrimary,
+                        cursorColor = GoldPrimary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("sale_customer_name_input")
+                )
+
+                // Customer Phone Input (keeping leading zeros)
+                OutlinedTextField(
+                    value = customerPhone,
+                    onValueChange = { input ->
+                        // Allow digits and '+' for international format, strictly keep string with zeros
+                        customerPhone = input.filter { it.isDigit() || it == '+' || it == ' ' || it == '-' }
+                    },
+                    label = { Text("رقم هاتف العميل (اختياري - مثلاً 010...)") },
+                    placeholder = { Text("مثال: 01012345678") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Phone, contentDescription = null, tint = GoldSecondary, modifier = Modifier.size(18.dp))
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GoldPrimary,
+                        unfocusedBorderColor = NavyCardBorder,
+                        focusedLabelColor = GoldPrimary,
+                        cursorColor = GoldPrimary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("sale_customer_phone_input")
+                )
+
+                // Additional Notes input
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("ملاحظات / اسم العميل (اختياري)") },
+                    label = { Text("ملاحظات إضافية على الفاتورة (اختياري)") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Notes, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
+                    },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = GoldPrimary,
                         unfocusedBorderColor = NavyCardBorder,
                         cursorColor = GoldPrimary
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("sale_notes_input")
                 )
 
                 // Total Calculation Box
@@ -408,7 +472,13 @@ fun SaleDialog(
             Button(
                 onClick = {
                     if (isValid) {
-                        onConfirmSale(enteredPrice, quantity, notes.trim())
+                        onConfirmSale(
+                            enteredPrice,
+                            quantity,
+                            notes.trim(),
+                            customerName.trim(),
+                            customerPhone.trim()
+                        )
                     } else if (isBelowMinPrice) {
                         errorMessage = "السعر المدخل أقل من الحد الأدنى للبيع"
                     }

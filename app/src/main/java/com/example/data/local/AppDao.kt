@@ -110,6 +110,9 @@ interface CatalogDao {
     @Query("UPDATE product_models SET stockQuantity = MAX(0, stockQuantity - :qty) WHERE id = :id")
     suspend fun deductStock(id: Long, qty: Int)
 
+    @Query("UPDATE product_models SET stockQuantity = stockQuantity + :qty WHERE id = :id")
+    suspend fun addStock(id: Long, qty: Int)
+
     @Query("SELECT * FROM categories WHERE id = :id LIMIT 1")
     suspend fun getCategoryById(id: Long): CategoryEntity?
 
@@ -311,3 +314,212 @@ interface RecycleBinDao {
     @Query("SELECT COUNT(*) FROM recycle_bin")
     fun getRecycleBinCount(): Flow<Int>
 }
+
+@Dao
+interface InvoiceDao {
+    @Transaction
+    @Query("SELECT * FROM invoices ORDER BY timestamp DESC")
+    fun getAllInvoicesWithItems(): Flow<List<InvoiceWithItems>>
+
+    @Transaction
+    @Query("SELECT * FROM invoices WHERE id = :id LIMIT 1")
+    suspend fun getInvoiceWithItemsById(id: Long): InvoiceWithItems?
+
+    @Transaction
+    @Query("SELECT * FROM invoices WHERE invoiceNumber = :invoiceNumber LIMIT 1")
+    suspend fun getInvoiceWithItemsByNumber(invoiceNumber: String): InvoiceWithItems?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertInvoice(invoice: InvoiceEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertInvoiceItems(items: List<InvoiceItemEntity>)
+
+    @Query("DELETE FROM invoices WHERE id = :id")
+    suspend fun deleteInvoice(id: Long)
+
+    @Query("DELETE FROM invoice_items WHERE invoiceId = :invoiceId")
+    suspend fun deleteInvoiceItems(invoiceId: Long)
+}
+
+@Dao
+interface ReturnsDao {
+    @Transaction
+    @Query("SELECT * FROM return_records ORDER BY timestamp DESC")
+    fun getAllReturnsWithItems(): Flow<List<ReturnWithItems>>
+
+    @Transaction
+    @Query("SELECT * FROM return_records WHERE id = :id LIMIT 1")
+    suspend fun getReturnById(id: Long): ReturnWithItems?
+
+    @Transaction
+    @Query("SELECT * FROM return_records WHERE returnNumber = :returnNumber LIMIT 1")
+    suspend fun getReturnByNumber(returnNumber: String): ReturnWithItems?
+
+    @Transaction
+    @Query("SELECT * FROM return_records WHERE originalInvoiceId = :invoiceId AND status != 'CANCELLED'")
+    suspend fun getActiveReturnsForInvoice(invoiceId: Long): List<ReturnWithItems>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertReturnRecord(record: ReturnRecordEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertReturnItems(items: List<ReturnItemEntity>)
+
+    @Query("UPDATE return_records SET status = :status WHERE id = :id")
+    suspend fun updateReturnStatus(id: Long, status: String)
+
+    @Query("DELETE FROM return_records WHERE id = :id")
+    suspend fun deleteReturnRecord(id: Long)
+
+    @Query("DELETE FROM return_items WHERE returnId = :returnId")
+    suspend fun deleteReturnItems(returnId: Long)
+}
+
+@Dao
+interface DamageRepairDao {
+    @Query("SELECT * FROM damage_repair_records ORDER BY registeredTimestamp DESC")
+    fun getAllRecords(): Flow<List<DamageRepairRecordEntity>>
+
+    @Query("SELECT * FROM damage_repair_records WHERE id = :id LIMIT 1")
+    suspend fun getRecordById(id: Long): DamageRepairRecordEntity?
+
+    @Query("SELECT * FROM damage_repair_records WHERE status = :status ORDER BY registeredTimestamp DESC")
+    fun getRecordsByStatus(status: String): Flow<List<DamageRepairRecordEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRecord(record: DamageRepairRecordEntity): Long
+
+    @Update
+    suspend fun updateRecord(record: DamageRepairRecordEntity)
+
+    @Query("DELETE FROM damage_repair_records WHERE id = :id")
+    suspend fun deleteRecord(id: Long)
+}
+
+@Dao
+interface StockMovementDao {
+    @Query("SELECT * FROM stock_movements ORDER BY timestamp DESC")
+    fun getAllMovements(): Flow<List<StockMovementEntity>>
+
+    @Query("SELECT * FROM stock_movements WHERE modelId = :modelId ORDER BY timestamp DESC")
+    fun getMovementsForModel(modelId: Long): Flow<List<StockMovementEntity>>
+
+    @Query("SELECT * FROM stock_movements WHERE movementType = :type ORDER BY timestamp DESC")
+    fun getMovementsByType(type: String): Flow<List<StockMovementEntity>>
+
+    @Query("SELECT * FROM stock_movements WHERE timestamp >= :sinceTimestamp ORDER BY timestamp DESC")
+    fun getMovementsSince(sinceTimestamp: Long): Flow<List<StockMovementEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMovement(movement: StockMovementEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMovements(movements: List<StockMovementEntity>)
+}
+
+@Dao
+interface InventoryAuditDao {
+    @Transaction
+    @Query("SELECT * FROM inventory_audits ORDER BY startTimestamp DESC")
+    fun getAllAudits(): Flow<List<InventoryAuditWithItems>>
+
+    @Transaction
+    @Query("SELECT * FROM inventory_audits WHERE id = :id LIMIT 1")
+    suspend fun getAuditById(id: Long): InventoryAuditWithItems?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAudit(audit: InventoryAuditEntity): Long
+
+    @Update
+    suspend fun updateAudit(audit: InventoryAuditEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAuditItems(items: List<InventoryAuditItemEntity>)
+
+    @Update
+    suspend fun updateAuditItem(item: InventoryAuditItemEntity)
+
+    @Update
+    suspend fun updateAuditItems(items: List<InventoryAuditItemEntity>)
+
+    @Query("SELECT * FROM inventory_audit_items WHERE id = :id LIMIT 1")
+    suspend fun getAuditItemById(id: Long): InventoryAuditItemEntity?
+
+    @Query("SELECT * FROM inventory_audit_items WHERE auditId = :auditId")
+    suspend fun getAuditItems(auditId: Long): List<InventoryAuditItemEntity>
+
+    @Query("DELETE FROM inventory_audit_items WHERE auditId = :auditId")
+    suspend fun deleteAuditItems(auditId: Long)
+
+    @Query("DELETE FROM inventory_audits WHERE id = :id")
+    suspend fun deleteAudit(id: Long)
+}
+
+@Dao
+interface FinancialDao {
+    // Treasury Transactions
+    @Query("SELECT * FROM treasury_transactions ORDER BY timestamp DESC")
+    fun getAllTreasuryTransactions(): Flow<List<TreasuryTransactionEntity>>
+
+    @Query("SELECT * FROM treasury_transactions WHERE timestamp >= :since ORDER BY timestamp DESC")
+    fun getTreasuryTransactionsSince(since: Long): Flow<List<TreasuryTransactionEntity>>
+
+    @Query("SELECT * FROM treasury_transactions WHERE referenceType = :refType AND referenceId = :refId AND isReversed = 0 LIMIT 1")
+    suspend fun getActiveTransactionByReference(refType: String, refId: Long): TreasuryTransactionEntity?
+
+    @Query("SELECT * FROM treasury_transactions ORDER BY id DESC LIMIT 1")
+    suspend fun getLatestTreasuryTransaction(): TreasuryTransactionEntity?
+
+    @Query("SELECT * FROM treasury_transactions WHERE id = :id LIMIT 1")
+    suspend fun getTreasuryTransactionById(id: Long): TreasuryTransactionEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTreasuryTransaction(tx: TreasuryTransactionEntity): Long
+
+    @Update
+    suspend fun updateTreasuryTransaction(tx: TreasuryTransactionEntity)
+
+    // Expense Categories
+    @Query("SELECT * FROM expense_categories ORDER BY name ASC")
+    fun getAllExpenseCategories(): Flow<List<ExpenseCategoryEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExpenseCategory(cat: ExpenseCategoryEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExpenseCategories(cats: List<ExpenseCategoryEntity>)
+
+    @Update
+    suspend fun updateExpenseCategory(cat: ExpenseCategoryEntity)
+
+    @Query("DELETE FROM expense_categories WHERE id = :id AND isDefault = 0")
+    suspend fun deleteExpenseCategory(id: Long)
+
+    // Expenses
+    @Query("SELECT * FROM expenses ORDER BY date DESC")
+    fun getAllExpenses(): Flow<List<ExpenseEntity>>
+
+    @Query("SELECT * FROM expenses WHERE date BETWEEN :start AND :end ORDER BY date DESC")
+    fun getExpensesBetween(start: Long, end: Long): Flow<List<ExpenseEntity>>
+
+    @Query("SELECT * FROM expenses WHERE categoryName = :category ORDER BY date DESC")
+    fun getExpensesByCategory(category: String): Flow<List<ExpenseEntity>>
+
+    @Query("SELECT * FROM expenses WHERE id = :id LIMIT 1")
+    suspend fun getExpenseById(id: Long): ExpenseEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertExpense(expense: ExpenseEntity): Long
+
+    @Update
+    suspend fun updateExpense(expense: ExpenseEntity)
+
+    // Financial Adjustments
+    @Query("SELECT * FROM financial_adjustments ORDER BY timestamp DESC")
+    fun getAllFinancialAdjustments(): Flow<List<FinancialAdjustmentEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFinancialAdjustment(adj: FinancialAdjustmentEntity): Long
+}
+

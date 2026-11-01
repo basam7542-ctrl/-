@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.ReceiptLong
@@ -57,22 +58,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.data.local.InvoiceWithItems
 import com.example.data.local.SaleRecordEntity
 import com.example.ui.MainTab
 import com.example.ui.MainViewModel
 import com.example.ui.components.BasheerFloatingButton
 import com.example.ui.components.BasheerVoiceAssistantDialog
+import com.example.ui.components.InvoicePreviewDialog
 import com.example.ui.components.NoPrinterAlertDialog
 import com.example.ui.components.PostSaleReceiptDialog
 import com.example.ui.components.SaleDialog
 import com.example.ui.components.StoreTopAppBar
 import com.example.ui.screens.AccountsScreen
 import com.example.ui.screens.CatalogScreen
+import com.example.ui.screens.CreateInvoiceScreen
+import com.example.ui.screens.DamageRepairScreen
 import com.example.ui.screens.InventoryScreen
 import com.example.ui.screens.LoginScreen
 import com.example.ui.screens.RecycleBinScreen
+import com.example.ui.screens.ReturnsScreen
+import com.example.ui.screens.ReturnReceiptPreviewDialog
 import com.example.ui.screens.SalesLogScreen
 import com.example.ui.screens.SettingsScreen
+import androidx.compose.material.icons.automirrored.filled.AssignmentReturn
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.example.ui.theme.CharcoalBackground
@@ -141,9 +149,18 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
 
     // Bluetooth Thermal Printer state
     val savedPrinter by viewModel.savedPrinter.collectAsState()
+    val storeProfile by viewModel.storeProfile.collectAsState()
     val storeName by viewModel.storeName.collectAsState()
     val isPrinting by viewModel.isPrinting.collectAsState()
     val lastCompletedSale by viewModel.lastCompletedSale.collectAsState()
+    val selectedInvoiceForPreview by viewModel.selectedInvoiceForPreview.collectAsState()
+
+    // Multi-Item Invoice states
+    val allInvoicesWithItems by viewModel.allInvoicesWithItems.collectAsState()
+    val showCreateInvoiceScreen by viewModel.showCreateInvoiceScreen.collectAsState()
+    val lastCompletedInvoice by viewModel.lastCompletedInvoice.collectAsState()
+    val selectedInvoiceWithItemsForPreview by viewModel.selectedInvoiceWithItemsForPreview.collectAsState()
+
     var showNoPrinterDialog by remember { mutableStateOf(false) }
 
     fun triggerPrintReceipt(sale: SaleRecordEntity) {
@@ -157,6 +174,109 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                 }
             }
         }
+    }
+
+    fun triggerPrintInvoiceWithItems(invoice: InvoiceWithItems) {
+        if (savedPrinter == null) {
+            showNoPrinterDialog = true
+        } else {
+            viewModel.printInvoiceWithItems(invoice) { success, msg ->
+                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    // Returns Management states
+    val allReturnsWithItems by viewModel.allReturnsWithItems.collectAsState()
+    val selectedReturnForPreview by viewModel.selectedReturnForPreview.collectAsState()
+    val returnsSearchQuery by viewModel.returnsSearchQuery.collectAsState()
+    val returnsTypeFilter by viewModel.returnsTypeFilter.collectAsState()
+
+    fun triggerPrintReturn(returnWithItems: com.example.data.local.ReturnWithItems) {
+        if (savedPrinter == null) {
+            showNoPrinterDialog = true
+        } else {
+            viewModel.printReturnReceipt(returnWithItems) { success, msg ->
+                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    fun exportReturnsCsv() {
+        val csv = viewModel.exportReturnsCsv()
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "سجل المرتجعات - البشيري للأجهزة الكهربائية")
+            putExtra(android.content.Intent.EXTRA_TEXT, csv)
+        }
+        context.startActivity(android.content.Intent.createChooser(intent, "مشاركة تقرير المرتجعات"))
+    }
+
+    // Damage & Repair states
+    val damageRepairRecords by viewModel.allDamageRepairRecords.collectAsState()
+    val damageSearchQuery by viewModel.damageSearchQuery.collectAsState()
+    val damageStatusFilter by viewModel.damageStatusFilter.collectAsState()
+
+    fun exportDamageRepairCsv() {
+        val csv = viewModel.exportDamageRepairCsv()
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "سجل الهالك والتالف والإصلاح - البشيري للأجهزة الكهربائية")
+            putExtra(android.content.Intent.EXTRA_TEXT, csv)
+        }
+        context.startActivity(android.content.Intent.createChooser(intent, "مشاركة تقرير الهالك والتالف والإصلاح"))
+    }
+
+    // Stock Movements & Inventory Audit states
+    val allStockMovements by viewModel.allStockMovements.collectAsState()
+    val allInventoryAudits by viewModel.allInventoryAudits.collectAsState()
+    val movementSearchQuery by viewModel.movementSearchQuery.collectAsState()
+    val movementTypeFilter by viewModel.movementTypeFilter.collectAsState()
+
+    fun exportStockMovementsCsv() {
+        val csv = viewModel.exportStockMovementsCsv()
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "سجل حركة المخزون - البشيري للأجهزة الكهربائية")
+            putExtra(android.content.Intent.EXTRA_TEXT, csv)
+        }
+        context.startActivity(android.content.Intent.createChooser(intent, "مشاركة سجل حركة المخزون"))
+    }
+
+    fun exportAuditCsv(auditWithItems: com.example.data.local.InventoryAuditWithItems) {
+        val csv = viewModel.exportAuditVarianceCsv(auditWithItems)
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "تقرير جرد وتسوية مخزون (${auditWithItems.audit.auditNumber}) - البشيري للأجهزة الكهربائية")
+            putExtra(android.content.Intent.EXTRA_TEXT, csv)
+        }
+        context.startActivity(android.content.Intent.createChooser(intent, "مشاركة تقرير الجرد والتسوية"))
+    }
+
+    fun exportStockValuationCsv() {
+        val csv = viewModel.exportCurrentStockValuationCsv()
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "تقرير تقييم المخزون الحالي - البشيري للأجهزة الكهربائية")
+            putExtra(android.content.Intent.EXTRA_TEXT, csv)
+        }
+        context.startActivity(android.content.Intent.createChooser(intent, "مشاركة تقرير تقييم المخزون"))
+    }
+
+    // Financial Management states
+    val allTreasuryTransactions by viewModel.allTreasuryTransactions.collectAsState()
+    val allExpenseCategories by viewModel.allExpenseCategories.collectAsState()
+    val allExpenses by viewModel.allExpenses.collectAsState()
+    val allFinancialAdjustments by viewModel.allFinancialAdjustments.collectAsState()
+    val financialSummary by viewModel.financialSummary.collectAsState()
+
+    fun shareCsv(title: String, csvContent: String) {
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, title)
+            putExtra(android.content.Intent.EXTRA_TEXT, csvContent)
+        }
+        context.startActivity(android.content.Intent.createChooser(intent, title))
     }
 
     // Voice Assistant "Basheer" state
@@ -327,8 +447,8 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                         NavigationBarItem(
                             selected = currentTab == MainTab.SALES_LOG,
                             onClick = { viewModel.selectTab(MainTab.SALES_LOG) },
-                            icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "سجل المبيعات") },
-                            label = { Text("المبيعات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                            icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "قسم الفواتير والمبيعات") },
+                            label = { Text("الفواتير", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = TextDark,
                                 selectedTextColor = GoldPrimary,
@@ -337,6 +457,36 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                                 unselectedTextColor = TextMuted
                             ),
                             modifier = Modifier.testTag("nav_tab_sales")
+                        )
+
+                        NavigationBarItem(
+                            selected = currentTab == MainTab.RETURNS,
+                            onClick = { viewModel.selectTab(MainTab.RETURNS) },
+                            icon = { Icon(Icons.AutoMirrored.Filled.AssignmentReturn, contentDescription = "قسم المرتجعات") },
+                            label = { Text("المرتجعات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = TextDark,
+                                selectedTextColor = GoldPrimary,
+                                indicatorColor = GoldPrimary,
+                                unselectedIconColor = TextMuted,
+                                unselectedTextColor = TextMuted
+                            ),
+                            modifier = Modifier.testTag("nav_tab_returns")
+                        )
+
+                        NavigationBarItem(
+                            selected = currentTab == MainTab.DAMAGE_REPAIR,
+                            onClick = { viewModel.selectTab(MainTab.DAMAGE_REPAIR) },
+                            icon = { Icon(Icons.Default.Build, contentDescription = "قسم الهالك والإصلاح") },
+                            label = { Text("الهالك والإصلاح", fontWeight = FontWeight.Bold, fontSize = 10.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = TextDark,
+                                selectedTextColor = GoldPrimary,
+                                indicatorColor = GoldPrimary,
+                                unselectedIconColor = TextMuted,
+                                unselectedTextColor = TextMuted
+                            ),
+                            modifier = Modifier.testTag("nav_tab_damage_repair")
                         )
 
                         if (isAdmin) {
@@ -429,15 +579,152 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                             onCategoryFilterChange = { viewModel.setInventoryCategoryFilter(it) },
                             onSortOptionChange = { viewModel.setInventorySortOption(it) },
                             onOpenSale = { viewModel.openSaleDialog(it) },
-                            onUpdateStock = { id, stock -> viewModel.updateStock(id, stock) }
+                            onUpdateStock = { id, stock -> viewModel.updateStock(id, stock) },
+                            movements = allStockMovements,
+                            audits = allInventoryAudits,
+                            suppliers = suppliers,
+                            merchants = merchants,
+                            movementSearchQuery = movementSearchQuery,
+                            movementTypeFilter = movementTypeFilter,
+                            onMovementSearchChange = { viewModel.setMovementSearchQuery(it) },
+                            onMovementFilterChange = { viewModel.setMovementTypeFilter(it) },
+                            onReceiveStock = { modelId, qty, cost, sId, mId, sName, invNo, notes, onSucc, onErr ->
+                                viewModel.receiveStock(modelId, qty, cost, sId, mId, sName, invNo, notes, onSucc, onErr)
+                            },
+                            onCreateAudit = { title, scope, target, notes, onSucc, onErr ->
+                                viewModel.createInventoryAudit(title, scope, target, notes, onSucc, onErr)
+                            },
+                            onUpdateAuditItemActualQuantity = { itemId, actualQty ->
+                                viewModel.updateAuditItemActualQuantity(itemId, actualQty)
+                            },
+                            onSettleAudit = { auditId, reason, onSucc, onErr ->
+                                viewModel.settleInventoryAudit(auditId, reason, onSucc, onErr)
+                            },
+                            onCancelAudit = { auditId, onSucc, onErr ->
+                                viewModel.cancelInventoryAudit(auditId, onSucc, onErr)
+                            },
+                            onExportMovementsCsv = { exportStockMovementsCsv() },
+                            onExportAuditCsv = { exportAuditCsv(it) },
+                            onExportValuationCsv = { exportStockValuationCsv() }
                         )
                     }
 
                     MainTab.SALES_LOG -> {
                         SalesLogScreen(
                             currentUser = user,
-                            sales = sales,
+                            invoicesWithItems = allInvoicesWithItems,
+                            legacySales = sales,
+                            onOpenCreateInvoice = { viewModel.openCreateInvoiceScreen() },
+                            onOpenInvoiceWithItemsPreview = { viewModel.openInvoiceWithItemsPreview(it) },
+                            onPrintInvoiceWithItems = { triggerPrintInvoiceWithItems(it) },
+                            onOpenInvoicePreview = { viewModel.openInvoicePreview(it) },
                             onPrintSaleReceipt = { triggerPrintReceipt(it) }
+                        )
+                    }
+
+                    MainTab.RETURNS -> {
+                        ReturnsScreen(
+                            currentUser = user,
+                            returnsList = allReturnsWithItems,
+                            invoicesList = allInvoicesWithItems,
+                            catalogModels = models,
+                            customers = customers,
+                            suppliers = suppliers,
+                            merchants = merchants,
+                            storeProfile = storeProfile,
+                            searchQuery = returnsSearchQuery,
+                            typeFilter = returnsTypeFilter,
+                            onSearchChange = { viewModel.setReturnsSearchQuery(it) },
+                            onFilterChange = { viewModel.setReturnsTypeFilter(it) },
+                            onOpenCreateReturn = { },
+                            onPreviewReturn = { viewModel.openReturnPreview(it) },
+                            onPrintReturn = { triggerPrintReturn(it) },
+                            onCancelReturn = { returnId ->
+                                viewModel.cancelReturn(
+                                    returnId = returnId,
+                                    onSuccess = {},
+                                    onError = { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
+                                )
+                            },
+                            onExportCsv = { exportReturnsCsv() },
+                            onFetchReturnableInvoiceItems = { invId -> viewModel.getReturnableInvoiceItems(invId) },
+                            onSubmitCreateReturn = { type, partyName, partyPhone, partyId, origInvNum, origInvId, items, reason, setType, setAmt, setNotes, notes, onOk, onErr ->
+                                viewModel.createReturn(
+                                    type = type,
+                                    partyName = partyName,
+                                    partyPhone = partyPhone,
+                                    partyId = partyId,
+                                    originalInvoiceNumber = origInvNum,
+                                    originalInvoiceId = origInvId,
+                                    items = items,
+                                    reason = reason,
+                                    settlementType = setType,
+                                    settlementAmount = setAmt,
+                                    settlementNotes = setNotes,
+                                    notes = notes,
+                                    onSuccess = onOk,
+                                    onError = onErr
+                                )
+                            }
+                        )
+                    }
+
+                    MainTab.DAMAGE_REPAIR -> {
+                        DamageRepairScreen(
+                            currentUser = user,
+                            records = damageRepairRecords,
+                            catalogModels = models,
+                            returnsWithItems = allReturnsWithItems,
+                            searchQuery = damageSearchQuery,
+                            statusFilter = damageStatusFilter,
+                            onSearchChange = { viewModel.setDamageSearchQuery(it) },
+                            onFilterChange = { viewModel.setDamageStatusFilter(it) },
+                            onRegisterDamageOrScrap = { modelId, qty, reason, details, status, srcType, retId, retNum, cost, loss, img, notes, onOk, onErr ->
+                                viewModel.registerDamageOrScrap(
+                                    modelId = modelId,
+                                    quantity = qty,
+                                    reason = reason,
+                                    damageDetails = details,
+                                    initialStatus = status,
+                                    sourceType = srcType,
+                                    returnRecordId = retId,
+                                    returnNumber = retNum,
+                                    unitCost = cost,
+                                    totalLossAmount = loss,
+                                    imageUri = img,
+                                    notes = notes,
+                                    onSuccess = onOk,
+                                    onError = onErr
+                                )
+                            },
+                            onSendToRepair = { recordId, reason, notes, onOk, onErr ->
+                                viewModel.sendToRepair(
+                                    recordId = recordId,
+                                    repairReason = reason,
+                                    technicianNotes = notes,
+                                    onSuccess = onOk,
+                                    onError = onErr
+                                )
+                            },
+                            onCompleteRepair = { recordId, outcome, spareParts, labor, notes, onOk, onErr ->
+                                viewModel.completeRepair(
+                                    recordId = recordId,
+                                    outcome = outcome,
+                                    sparePartsCost = spareParts,
+                                    laborCost = labor,
+                                    repairNotes = notes,
+                                    onSuccess = onOk,
+                                    onError = onErr
+                                )
+                            },
+                            onApproveReturnToStock = { recordId, onOk, onErr ->
+                                viewModel.approveReturnToStock(
+                                    recordId = recordId,
+                                    onSuccess = onOk,
+                                    onError = onErr
+                                )
+                            },
+                            onExportCsv = { exportDamageRepairCsv() }
                         )
                     }
 
@@ -448,6 +735,11 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                                 suppliers = suppliers,
                                 merchants = merchants,
                                 customers = customers,
+                                treasuryTransactions = allTreasuryTransactions,
+                                expenseCategories = allExpenseCategories,
+                                expenses = allExpenses,
+                                financialAdjustments = allFinancialAdjustments,
+                                financialSummary = financialSummary,
                                 onAddSupplier = { name, phone, purchases, notes ->
                                     viewModel.addSupplier(name, phone, purchases, notes)
                                 },
@@ -493,6 +785,34 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                                 onDeleteCustomer = { id ->
                                     viewModel.deleteCustomer(id)
                                 },
+                                onRecordTreasuryTransaction = { type, category, amount, refType, partyName, paymentMethod, desc ->
+                                    viewModel.recordTreasuryTransaction(type, category, amount, refType, partyName, paymentMethod, desc)
+                                },
+                                onReverseTreasuryTransaction = { txId, reason ->
+                                    viewModel.reverseTreasuryTransaction(txId, reason)
+                                },
+                                onRecordExpense = { catName, amount, desc, beneficiary, payMethod, refNum, notes ->
+                                    viewModel.recordExpense(catName, amount, desc, beneficiary, payMethod, refNum, notes)
+                                },
+                                onReverseExpense = { expId, reason ->
+                                    viewModel.reverseExpense(expId, reason)
+                                },
+                                onAddExpenseCategory = { name, desc ->
+                                    viewModel.addExpenseCategory(name, desc)
+                                },
+                                onDeleteExpenseCategory = { id ->
+                                    viewModel.deleteExpenseCategory(id)
+                                },
+                                onRecordFinancialAdjustment = { targetType, targetId, targetName, adjType, amount, reason ->
+                                    viewModel.recordFinancialAdjustment(targetType, targetId, targetName, adjType, amount, reason)
+                                },
+                                onRefreshFinancialSummary = { start, end ->
+                                    viewModel.refreshFinancialSummary(start, end)
+                                },
+                                onExportTreasuryLedger = { viewModel.exportTreasuryLedgerCsv() },
+                                onExportExpenses = { viewModel.exportExpensesCsv() },
+                                onExportFinancialReport = { viewModel.exportFinancialReportCsv() },
+                                onShareCsv = { title, csv -> shareCsv(title, csv) },
                                 getSupplierTransactionsFlow = { sId ->
                                     viewModel.getSupplierTransactions(sId)
                                 },
@@ -535,6 +855,10 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                             onPrintTestReceipt = { callback ->
                                 viewModel.printTestReceipt(callback)
                             },
+                            storeProfile = storeProfile,
+                            onUpdateStoreProfile = { viewModel.updateStoreProfile(it) },
+                            onUploadLogo = { viewModel.saveStoreLogo(it) },
+                            onResetLogo = { viewModel.resetStoreLogo() },
                             recycleBinCount = recycleBinCount,
                             onNavigateToRecycleBin = {
                                 previousTab = currentTab
@@ -613,7 +937,7 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                         model = saleTargetModel!!,
                         sellerName = user.displayName,
                         onDismiss = { viewModel.closeSaleDialog() },
-                        onConfirmSale = { soldPrice, qty, notes ->
+                        onConfirmSale = { soldPrice, qty, notes, custName, custPhone ->
                             val currentModel = saleTargetModel!!
                             val remainingStock = currentModel.stockQuantity - qty
                             viewModel.submitSale(
@@ -621,6 +945,8 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                                 soldPrice = soldPrice,
                                 quantity = qty,
                                 notes = notes,
+                                customerName = custName,
+                                customerPhone = custPhone,
                                 onSuccess = {
                                     Toast.makeText(context, "تم تسجيل البيع بنجاح", Toast.LENGTH_SHORT).show()
                                     if (isTtsOperationsEnabled) {
@@ -639,9 +965,69 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                     )
                 }
 
-                // Post-Sale Receipt Option Dialog
+                // Dedicated Multi-Item Invoice Creation Screen
+                if (showCreateInvoiceScreen) {
+                    CreateInvoiceScreen(
+                        currentUser = user,
+                        availableModels = models,
+                        onClose = { viewModel.closeCreateInvoiceScreen() },
+                        onSubmitInvoice = { custName, custPhone, items, discount, paid, notes, andPrintPreview ->
+                            viewModel.submitMultiItemInvoice(
+                                customerName = custName,
+                                customerPhone = custPhone,
+                                items = items,
+                                discount = discount,
+                                paidAmount = paid,
+                                notes = notes,
+                                onSuccess = { invoiceWithItems ->
+                                    if (andPrintPreview) {
+                                        viewModel.openInvoiceWithItemsPreview(invoiceWithItems)
+                                    }
+                                    if (isTtsOperationsEnabled) {
+                                        ttsHelper.speakSaleSuccess()
+                                    }
+                                },
+                                onError = { err ->
+                                    Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        }
+                    )
+                }
+
+                // Multi-Item Invoice Post-Creation Dialog
+                if (lastCompletedInvoice != null) {
+                    InvoicePreviewDialog(
+                        invoiceWithItems = lastCompletedInvoice!!,
+                        isPrinting = isPrinting,
+                        onPrintReceipt = {
+                            val inv = lastCompletedInvoice
+                            if (inv != null) {
+                                triggerPrintInvoiceWithItems(inv)
+                            }
+                        },
+                        onDismiss = { viewModel.closePostInvoiceDialog() }
+                    )
+                }
+
+                // Multi-Item Invoice Preview Dialog (from Sales Log or Preview action)
+                if (selectedInvoiceWithItemsForPreview != null) {
+                    InvoicePreviewDialog(
+                        invoiceWithItems = selectedInvoiceWithItemsForPreview!!,
+                        isPrinting = isPrinting,
+                        onPrintReceipt = {
+                            val inv = selectedInvoiceWithItemsForPreview
+                            if (inv != null) {
+                                triggerPrintInvoiceWithItems(inv)
+                            }
+                        },
+                        onDismiss = { viewModel.closeInvoiceWithItemsPreview() }
+                    )
+                }
+
+                // Post-Sale Official Invoice Dialog (Immediate live preview & print)
                 if (lastCompletedSale != null) {
-                    PostSaleReceiptDialog(
+                    InvoicePreviewDialog(
                         sale = lastCompletedSale!!,
                         isPrinting = isPrinting,
                         onPrintReceipt = {
@@ -651,6 +1037,36 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                             }
                         },
                         onDismiss = { viewModel.closePostSaleDialog() }
+                    )
+                }
+
+                // Historical Sales Log Invoice Dialog (Preview & Reprint)
+                if (selectedInvoiceForPreview != null) {
+                    InvoicePreviewDialog(
+                        sale = selectedInvoiceForPreview!!,
+                        isPrinting = isPrinting,
+                        onPrintReceipt = {
+                            val sale = selectedInvoiceForPreview
+                            if (sale != null) {
+                                triggerPrintReceipt(sale)
+                            }
+                        },
+                        onDismiss = { viewModel.closeInvoicePreview() }
+                    )
+                }
+
+                // Return Receipt Preview Dialog
+                if (selectedReturnForPreview != null) {
+                    ReturnReceiptPreviewDialog(
+                        returnWithItems = selectedReturnForPreview!!,
+                        storeProfile = storeProfile,
+                        onDismiss = { viewModel.closeReturnPreview() },
+                        onPrint = {
+                            val ret = selectedReturnForPreview
+                            if (ret != null) {
+                                triggerPrintReturn(ret)
+                            }
+                        }
                     )
                 }
 

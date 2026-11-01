@@ -62,8 +62,20 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import com.example.data.local.CategoryEntity
+import com.example.data.local.InventoryAuditEntity
+import com.example.data.local.InventoryAuditWithItems
+import com.example.data.local.MerchantAccountEntity
 import com.example.data.local.ProductModelEntity
+import com.example.data.local.StockMovementEntity
+import com.example.data.local.SupplierAccountEntity
 import com.example.data.local.UserAccountEntity
 import com.example.ui.components.EditStockDialog
 import com.example.ui.theme.CharcoalBackground
@@ -89,6 +101,13 @@ import com.example.ui.theme.WarningAmber
 import java.text.NumberFormat
 import java.util.Locale
 
+enum class InventorySubTab {
+    STOCK_BALANCE,
+    STOCK_MOVEMENTS,
+    INVENTORY_AUDIT,
+    REPORTS
+}
+
 @Composable
 fun InventoryScreen(
     currentUser: UserAccountEntity,
@@ -101,9 +120,53 @@ fun InventoryScreen(
     onCategoryFilterChange: (String?) -> Unit,
     onSortOptionChange: (String) -> Unit,
     onOpenSale: (ProductModelEntity) -> Unit,
-    onUpdateStock: (modelId: Long, newStock: Int) -> Unit
+    onUpdateStock: (modelId: Long, newStock: Int) -> Unit,
+    movements: List<StockMovementEntity> = emptyList(),
+    audits: List<InventoryAuditWithItems> = emptyList(),
+    suppliers: List<SupplierAccountEntity> = emptyList(),
+    merchants: List<MerchantAccountEntity> = emptyList(),
+    movementSearchQuery: String = "",
+    movementTypeFilter: String? = null,
+    onMovementSearchChange: (String) -> Unit = {},
+    onMovementFilterChange: (String?) -> Unit = {},
+    onReceiveStock: (
+        modelId: Long,
+        quantity: Int,
+        unitCostPrice: Double,
+        supplierId: Long?,
+        merchantId: Long?,
+        supplierOrMerchantName: String,
+        purchaseInvoiceNumber: String,
+        notes: String,
+        onSuccess: (ProductModelEntity) -> Unit,
+        onError: (String) -> Unit
+    ) -> Unit = { _, _, _, _, _, _, _, _, _, _ -> },
+    onCreateAudit: (
+        title: String,
+        scope: String,
+        targetName: String?,
+        notes: String,
+        onSuccess: (InventoryAuditWithItems) -> Unit,
+        onError: (String) -> Unit
+    ) -> Unit = { _, _, _, _, _, _ -> },
+    onUpdateAuditItemActualQuantity: (itemId: Long, actualQuantity: Int) -> Unit = { _, _ -> },
+    onSettleAudit: (
+        auditId: Long,
+        reason: String,
+        onSuccess: (InventoryAuditWithItems) -> Unit,
+        onError: (String) -> Unit
+    ) -> Unit = { _, _, _, _ -> },
+    onCancelAudit: (
+        auditId: Long,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) -> Unit = { _, _, _ -> },
+    onExportMovementsCsv: () -> Unit = {},
+    onExportAuditCsv: (InventoryAuditWithItems) -> Unit = {},
+    onExportValuationCsv: () -> Unit = {}
 ) {
     val isAdmin = currentUser.role == "ADMIN"
+    var selectedSubTab by remember { mutableStateOf(InventorySubTab.STOCK_BALANCE) }
     val numberFormat = remember { NumberFormat.getNumberInstance(Locale("ar", "EG")) }
 
     var modelForStockEdit by remember { mutableStateOf<ProductModelEntity?>(null) }
@@ -138,16 +201,79 @@ fun InventoryScreen(
         (((totalModelsCount - lowStockCount).toFloat() / totalModelsCount.toFloat()) * 100).toInt()
     } else 100
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(CharcoalBackground)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 6.dp)
+        // Top Sub-Tabs Row
+        ScrollableTabRow(
+            selectedTabIndex = selectedSubTab.ordinal,
+            containerColor = NavySurfaceElevated,
+            contentColor = GoldPrimary,
+            edgePadding = 12.dp,
+            indicator = { tabPositions ->
+                TabRowDefaults.SecondaryIndicator(
+                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedSubTab.ordinal]),
+                    color = GoldPrimary,
+                    height = 3.dp
+                )
+            },
+            divider = {}
         ) {
+            Tab(
+                selected = selectedSubTab == InventorySubTab.STOCK_BALANCE,
+                onClick = { selectedSubTab = InventorySubTab.STOCK_BALANCE },
+                text = { Text("رصيد المخزون", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                icon = { Icon(Icons.Default.Inventory2, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                selectedContentColor = GoldPrimary,
+                unselectedContentColor = TextMuted,
+                modifier = Modifier.testTag("tab_sub_stock_balance")
+            )
+
+            Tab(
+                selected = selectedSubTab == InventorySubTab.STOCK_MOVEMENTS,
+                onClick = { selectedSubTab = InventorySubTab.STOCK_MOVEMENTS },
+                text = { Text("حركة المخزون (${movements.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                icon = { Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                selectedContentColor = GoldPrimary,
+                unselectedContentColor = TextMuted,
+                modifier = Modifier.testTag("tab_sub_stock_movements")
+            )
+
+            Tab(
+                selected = selectedSubTab == InventorySubTab.INVENTORY_AUDIT,
+                onClick = { selectedSubTab = InventorySubTab.INVENTORY_AUDIT },
+                text = { Text("الجرد والتسويات (${audits.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                icon = { Icon(Icons.Default.FactCheck, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                selectedContentColor = GoldPrimary,
+                unselectedContentColor = TextMuted,
+                modifier = Modifier.testTag("tab_sub_inventory_audit")
+            )
+
+            Tab(
+                selected = selectedSubTab == InventorySubTab.REPORTS,
+                onClick = { selectedSubTab = InventorySubTab.REPORTS },
+                text = { Text("تقارير المخزون", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                icon = { Icon(Icons.Default.Assessment, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                selectedContentColor = GoldPrimary,
+                unselectedContentColor = TextMuted,
+                modifier = Modifier.testTag("tab_sub_inventory_reports")
+            )
+        }
+
+        when (selectedSubTab) {
+            InventorySubTab.STOCK_BALANCE -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(CharcoalBackground)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
             // 1. Warehouse Stock Control Center Hero
             Card(
                 modifier = Modifier
@@ -580,6 +706,50 @@ fun InventoryScreen(
                         )
                     }
                 }
+                    }
+                }
+            }
+        }
+
+            InventorySubTab.STOCK_MOVEMENTS -> {
+                StockMovementScreen(
+                    currentUser = currentUser,
+                    movements = movements,
+                    models = models,
+                    suppliers = suppliers,
+                    merchants = merchants,
+                    searchQuery = movementSearchQuery,
+                    typeFilter = movementTypeFilter,
+                    onSearchChange = onMovementSearchChange,
+                    onFilterChange = onMovementFilterChange,
+                    onReceiveStock = onReceiveStock,
+                    onExportCsv = onExportMovementsCsv
+                )
+            }
+
+            InventorySubTab.INVENTORY_AUDIT -> {
+                InventoryAuditScreen(
+                    currentUser = currentUser,
+                    audits = audits,
+                    categories = categories,
+                    models = models,
+                    onCreateAudit = onCreateAudit,
+                    onUpdateActualQuantity = onUpdateAuditItemActualQuantity,
+                    onSettleAudit = onSettleAudit,
+                    onCancelAudit = onCancelAudit,
+                    onExportAuditCsv = onExportAuditCsv
+                )
+            }
+
+            InventorySubTab.REPORTS -> {
+                InventoryReportsView(
+                    currentUser = currentUser,
+                    models = models,
+                    categories = categories,
+                    movements = movements,
+                    onExportValuationCsv = onExportValuationCsv,
+                    onExportMovementsCsv = onExportMovementsCsv
+                )
             }
         }
     }
