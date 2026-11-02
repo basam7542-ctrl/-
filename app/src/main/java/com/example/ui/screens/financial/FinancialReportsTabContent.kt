@@ -361,7 +361,7 @@ fun FinancialReportsTabContent(
                     iconTint = ErrorRed
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        report.expensesByCategory.forEach { (cat, amount) ->
+                        for ((cat, amount) in report.expensesByCategory) {
                             val pct = if (report.totalExpenses > 0) ((amount / report.totalExpenses) * 100).toInt() else 0
                             Row(
                                 modifier = Modifier.fillMaxWidth(),

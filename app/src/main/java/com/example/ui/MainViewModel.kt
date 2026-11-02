@@ -1582,6 +1582,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateModelPrice(modelId: Long, newFinalPrice: Double, newMinPrice: Double? = null) {
+        if (_currentUser.value?.role != "ADMIN") return
+        viewModelScope.launch {
+            val model = allModels.value.firstOrNull { it.id == modelId } ?: return@launch
+            val minP = newMinPrice ?: (newFinalPrice * 0.95)
+            repository.updateModel(model.copy(finalPrice = newFinalPrice, minAllowedPrice = minP))
+            _toastMessage.emit("تم تعديل سعر الموديل بنجاح إلى $newFinalPrice ج.م")
+        }
+    }
+
+    fun paySupplierVoice(supplierName: String, amount: Double) {
+        if (_currentUser.value?.role != "ADMIN") return
+        viewModelScope.launch {
+            val suppliers = allSuppliers.value
+            val existing = suppliers.firstOrNull { it.supplierName.contains(supplierName, ignoreCase = true) }
+            val supId = existing?.id ?: repository.addSupplier(supplierName, "", 0.0, "تم إنشاؤه عبر بشير")
+            repository.addSupplierTransaction(supId, "PAYMENT", amount, "سداد نقدي عبر المساعد الصوتي بشير")
+            refreshFinancialSummary()
+            _toastMessage.emit("تم سداد $amount ج.م للمورد $supplierName وخصمها من الخزنة")
+        }
+    }
+
+    fun collectCustomerVoice(customerName: String, amount: Double) {
+        viewModelScope.launch {
+            val customers = allCustomers.value
+            val existing = customers.firstOrNull { it.customerName.contains(customerName, ignoreCase = true) }
+            val custId = existing?.id ?: repository.addCustomer(customerName, "", 0.0, "تم إنشاؤه عبر بشير")
+            repository.addCustomerTransaction(custId, "COLLECTION", amount, "تحصيل نقدي", "تحصيل نقدي عبر المساعد الصوتي بشير")
+            refreshFinancialSummary()
+            _toastMessage.emit("تم تحصيل $amount ج.م من $customerName وتوريدها للخزنة")
+        }
+    }
+
     // --- Backup & Export ---
     fun generateBackupCsv(): String {
         return repository.buildCsvExport(
@@ -1622,7 +1655,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 paymentMethod = paymentMethod,
                 description = description,
                 userId = user?.id ?: "admin",
-                userName = user?.name ?: "المدير"
+                userName = user?.displayName ?: "المدير"
             )
             if (res.isSuccess) {
                 _toastMessage.emit("تم تسجيل حركة الخزينة بنجاح")
@@ -1643,7 +1676,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 transactionId = transactionId,
                 reversalReason = reason,
                 userId = user?.id ?: "admin",
-                userName = user?.name ?: "المدير"
+                userName = user?.displayName ?: "المدير"
             )
             if (res.isSuccess) {
                 _toastMessage.emit("تمت الحركة العكسية وإلغاء المعاملة بنجاح")
@@ -1677,7 +1710,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 paymentMethod = paymentMethod,
                 referenceNumber = referenceNumber,
                 userId = user?.id ?: "admin",
-                userName = user?.name ?: "المدير",
+                userName = user?.displayName ?: "المدير",
                 notes = notes
             )
             if (res.isSuccess) {
@@ -1699,7 +1732,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 expenseId = expenseId,
                 reversalReason = reason,
                 userId = user?.id ?: "admin",
-                userName = user?.name ?: "المدير"
+                userName = user?.displayName ?: "المدير"
             )
             if (res.isSuccess) {
                 _toastMessage.emit("تم إلغاء المصروف بحركة عكسية بنجاح")
@@ -1760,7 +1793,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 amount = amount,
                 reason = reason,
                 userId = user?.id ?: "admin",
-                userName = user?.name ?: "المدير"
+                userName = user?.displayName ?: "المدير"
             )
             if (res.isSuccess) {
                 _toastMessage.emit("تم اعتماد التسوية المالية وتحديث الأرصدة بنجاح")

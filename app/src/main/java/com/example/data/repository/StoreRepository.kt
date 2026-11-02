@@ -639,6 +639,8 @@ class StoreRepository(
                     timestamp = timestamp
                 )
             )
+        }
+
         // 5. Automatic Treasury Cash-In for paid amount
         if (finalPaid > 0) {
             recordTreasuryTransaction(

@@ -916,6 +916,7 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                         brands = brands,
                         models = models,
                         isAdmin = isAdmin,
+                        treasuryCashBalance = financialSummary.treasuryCashBalance,
                         onStartListening = launchSystemSpeechIntent,
                         onStopListening = { speechHelper.stopListening() },
                         onLaunchSystemSpeechIntent = launchSystemSpeechIntent,
@@ -927,7 +928,22 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                             viewModel.addVoiceProduct(cat, brand, prod, model, finalP, minP, stock)
                             if (isTtsOperationsEnabled) ttsHelper.speakProductAdded()
                         },
-                        onOpenSale = { viewModel.openSaleDialog(it) }
+                        onOpenSale = { viewModel.openSaleDialog(it) },
+                        onNavigateToTab = { viewModel.selectTab(it) },
+                        onDeleteModel = { modelId -> viewModel.deleteModel(modelId) },
+                        onUpdatePrice = { modelId, newPrice -> viewModel.updateModelPrice(modelId, newPrice) },
+                        onRecordExpense = { cat, amt, desc ->
+                            viewModel.recordExpense(cat, amt, desc, beneficiary = "", paymentMethod = "CASH_TREASURY")
+                        },
+                        onSupplierPayment = { supplierName, amt ->
+                            viewModel.paySupplierVoice(supplierName, amt)
+                        },
+                        onCustomerCollection = { customerName, amt ->
+                            viewModel.collectCustomerVoice(customerName, amt)
+                        },
+                        onSpeakFeedback = { text ->
+                            if (isTtsOperationsEnabled) ttsHelper.speak(text)
+                        }
                     )
                 }
 

@@ -1650,5 +1650,186 @@ class ExampleRobolectricTest {
         assertTrue(createResult.isFailure)
         assertTrue(createResult.exceptionOrNull()?.message?.contains("المدير فقط") == true)
     }
+
+    // --- Financial Accounting System Tests ---
+
+    @Test
+    fun testCashSaleAutomaticallyRecordsTreasuryCashIn() = runBlocking {
+        // Setup a product model
+        val catId = repository.addCategory("شاشات")
+        val brandId = repository.addBrand("سامسونج", catId)
+        val prodId = repository.addProduct("شاشة 55 بوصة", catId, "شاشات", brandId, "سامسونج")
+        val modelId = repository.addModel(
+            productId = prodId,
+            productName = "شاشة 55 بوصة",
+            brandName = "سامسونج",
+            categoryName = "شاشات",
+            modelName = "AU7000",
+            finalPrice = 12000.0,
+            minAllowedPrice = 11000.0,
+            stockQuantity = 5,
+            code = "TV-55"
+        )
+        val liveModel = db.catalogDao().getModelById(modelId)!!
+
+        val item = InvoiceDraftItem(model = liveModel, quantity = 1, negotiatedUnitPrice = 12000.0)
+        val invoiceResult = repository.createInvoice(
+            customerName = "أحمد إبراهيم",
+            customerPhone = "01012345678",
+            sellerId = "seller1",
+            sellerName = "محمد",
+            items = listOf(item),
+            discount = 0.0,
+            paidAmount = 12000.0
+        )
+        assertTrue(invoiceResult.isSuccess)
+
+        // Verify treasury transaction created
+        val txs = repository.allTreasuryTransactions.first()
+        val cashInTx = txs.find { it.referenceNumber == invoiceResult.getOrNull()!!.invoice.invoiceNumber }
+        assertNotNull(cashInTx)
+        assertEquals("CASH_IN", cashInTx!!.type)
+        assertEquals("SALE_CASH", cashInTx.category)
+        assertEquals(12000.0, cashInTx.amount, 0.01)
+        assertEquals(12000.0, cashInTx.balanceAfter, 0.01)
+    }
+
+    @Test
+    fun testCreditSaleDoesNotInflateTreasuryCash() = runBlocking {
+        val catId = repository.addCategory("غسالات")
+        val brandId = repository.addBrand("إل جي", catId)
+        val prodId = repository.addProduct("غسالة 8 كيلو", catId, "غسالات", brandId, "إل جي")
+        val modelId = repository.addModel(
+            productId = prodId,
+            productName = "غسالة 8 كيلو",
+            brandName = "إل جي",
+            categoryName = "غسالات",
+            modelName = "F4V5",
+            finalPrice = 15000.0,
+            minAllowedPrice = 14000.0,
+            stockQuantity = 3,
+            code = "WM-8"
+        )
+        val liveModel = db.catalogDao().getModelById(modelId)!!
+
+        val initialTxs = repository.allTreasuryTransactions.first().size
+        val item = InvoiceDraftItem(model = liveModel, quantity = 1, negotiatedUnitPrice = 15000.0)
+
+        // Credit sale: paidAmount = 0
+        val invoiceResult = repository.createInvoice(
+            customerName = "محمود عادل",
+            customerPhone = "01122334455",
+            sellerId = "seller1",
+            sellerName = "محمد",
+            items = listOf(item),
+            discount = 0.0,
+            paidAmount = 0.0
+        )
+        assertTrue(invoiceResult.isSuccess)
+        assertEquals(15000.0, invoiceResult.getOrNull()!!.invoice.remainingAmount, 0.01)
+
+        // Cash treasury must NOT have recorded any cash receipt
+        val currentTxs = repository.allTreasuryTransactions.first().size
+        assertEquals(initialTxs, currentTxs)
+    }
+
+    @Test
+    fun testSupplierPaymentDeductsFromTreasury() = runBlocking {
+        val supplierId = repository.addSupplier("شركة توشيبا العربي", "01234567890", 50000.0, "رصيد افتتاحي")
+        // First deposit some cash to treasury
+        repository.recordTreasuryTransaction(
+            type = "CASH_IN",
+            category = "CAPITAL_INJECTION",
+            amount = 100000.0,
+            description = "إيداع رأس مال بالخزينة"
+        )
+
+        // Make payment to supplier
+        repository.addSupplierTransaction(supplierId, "PAYMENT", 20000.0, "دفعة نقدية بشيك مسحوب")
+
+        val txs = repository.allTreasuryTransactions.first()
+        val supplierTx = txs.find { it.category == "SUPPLIER_PAYMENT" }
+        assertNotNull(supplierTx)
+        assertEquals("CASH_OUT", supplierTx!!.type)
+        assertEquals(20000.0, supplierTx.amount, 0.01)
+        assertEquals(80000.0, supplierTx.balanceAfter, 0.01)
+    }
+
+    @Test
+    fun testCustomerCollectionAddsToTreasury() = runBlocking {
+        val customerId = repository.addCustomer("تاجر تجزئة محمد علي", "01099887766", 30000.0, "حساب آجل")
+
+        // Customer pays part of due
+        repository.addCustomerTransaction(customerId, "COLLECTION", 10000.0, "", "تحصيل نقدي بالمعرض")
+
+        val txs = repository.allTreasuryTransactions.first()
+        val collectionTx = txs.find { it.category == "CUSTOMER_COLLECTION" }
+        assertNotNull(collectionTx)
+        assertEquals("CASH_IN", collectionTx!!.type)
+        assertEquals(10000.0, collectionTx.amount, 0.01)
+    }
+
+    @Test
+    fun testRecordExpenseDeductsFromTreasuryWhenCashTreasury() = runBlocking {
+        // Add expense categories
+        repository.addExpenseCategory("كهرباء ومياه وإنترنت", "فواتير الخدمات")
+
+        // Record expense paid from Treasury
+        val res = repository.recordExpense(
+            categoryName = "كهرباء ومياه وإنترنت",
+            amount = 1500.0,
+            description = "سداد فاتورة كهرباء المعرض لشهر أكتوبر",
+            beneficiary = "شركة توزيع الكهرباء",
+            paymentMethod = "CASH_TREASURY"
+        )
+        assertTrue(res.isSuccess)
+
+        val txs = repository.allTreasuryTransactions.first()
+        val expTx = txs.find { it.referenceNumber == res.getOrNull()!!.expenseNumber }
+        assertNotNull(expTx)
+        assertEquals("CASH_OUT", expTx!!.type)
+        assertEquals("EXPENSE", expTx.category)
+        assertEquals(1500.0, expTx.amount, 0.01)
+    }
+
+    @Test
+    fun testReversingEntryCompensatesLedgerWithoutDeleting() = runBlocking {
+        val txRes = repository.recordTreasuryTransaction(
+            type = "CASH_IN",
+            category = "CAPITAL_INJECTION",
+            amount = 5000.0,
+            description = "توريد نقدي"
+        )
+        assertTrue(txRes.isSuccess)
+        val originalTx = txRes.getOrNull()!!
+
+        // Reverse transaction
+        val revRes = repository.reverseTreasuryTransaction(
+            transactionId = originalTx.id,
+            reversalReason = "خطأ في تسجيل الإيداع",
+            userId = "admin",
+            userName = "المدير"
+        )
+        assertTrue(revRes.isSuccess)
+
+        // Check original is marked reversed
+        val updatedOriginal = db.financialDao().getTreasuryTransactionById(originalTx.id)!!
+        assertTrue(updatedOriginal.isReversed)
+        assertEquals("خطأ في تسجيل الإيداع", updatedOriginal.reversalNotes)
+
+        // Check compensating transaction
+        val compensating = revRes.getOrNull()!!
+        assertEquals("CASH_OUT", compensating.type)
+        assertEquals("ADJUSTMENT", compensating.category)
+        assertEquals(5000.0, compensating.amount, 0.01)
+    }
+
+    @Test
+    fun testFinancialSummaryCalculatesAccurately() = runBlocking {
+        val summary = repository.getFinancialSummaryReport()
+        assertNotNull(summary)
+        assertTrue(summary.totalSales >= 0.0)
+        assertTrue(summary.totalPurchases >= 0.0)
+    }
 }
 
