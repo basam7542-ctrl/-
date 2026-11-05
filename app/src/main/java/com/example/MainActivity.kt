@@ -14,19 +14,31 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -34,10 +46,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import com.example.data.local.ProductModelEntity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -83,10 +104,19 @@ import com.example.ui.screens.SettingsScreen
 import androidx.compose.material.icons.automirrored.filled.AssignmentReturn
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Recycling
+import androidx.compose.material.icons.filled.Warning
+import com.example.ui.theme.SuccessGreen
+import com.example.ui.theme.WarningAmber
 import com.example.ui.theme.CharcoalBackground
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.GlassBorder
+import com.example.ui.theme.CairoFontFamily
 import com.example.ui.theme.GoldBorderGlow
+import com.example.ui.theme.GoldLight
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.GoldSecondary
 import com.example.ui.theme.MyApplicationTheme
@@ -96,6 +126,8 @@ import com.example.ui.theme.NavySurfaceElevated
 import com.example.ui.theme.TextDark
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextWhite
+import com.example.ui.theme.GoldContainer
+import com.example.ui.theme.NavySurfaceVariant
 import com.example.voice.SpeechRecognizerHelper
 import com.example.voice.TtsHelper
 import kotlinx.coroutines.flow.collectLatest
@@ -378,150 +410,57 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
         val user = currentUser!!
         val isAdmin = user.role == "ADMIN"
 
+        val lowStockCount = remember(models) { models.count { it.stockQuantity <= 2 } }
+        val lowStockModels = remember(models) { models.filter { it.stockQuantity <= 2 } }
+        val totalSalesSum = remember(allInvoicesWithItems, sales) {
+            if (allInvoicesWithItems.isNotEmpty()) {
+                allInvoicesWithItems.sumOf { it.invoice.finalTotal }
+            } else {
+                sales.sumOf { it.totalPrice }
+            }
+        }
+        val totalInvoicesCount = remember(allInvoicesWithItems, sales) {
+            if (allInvoicesWithItems.isNotEmpty()) allInvoicesWithItems.size else sales.size
+        }
+        var showNotificationsDialog by remember { mutableStateOf(false) }
+
         Scaffold(
             topBar = {
                 StoreTopAppBar(
                     currentUser = user,
                     recycleBinCount = recycleBinCount,
+                    notificationsCount = lowStockCount,
+                    onNotificationsClick = { showNotificationsDialog = true },
                     onRecycleBinClick = {
                         previousTab = currentTab
                         viewModel.selectTab(MainTab.RECYCLE_BIN)
+                    },
+                    onSettingsClick = {
+                        viewModel.selectTab(MainTab.SETTINGS)
                     },
                     onLogoutClick = { viewModel.logout() }
                 )
             },
             bottomBar = {
-                androidx.compose.foundation.layout.Column(
-                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        Color.Transparent,
-                                        GoldBorderGlow,
-                                        ElectricBlue.copy(alpha = 0.35f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                    )
-                    NavigationBar(
-                        containerColor = NavySurface,
-                        contentColor = GoldPrimary,
-                        tonalElevation = 6.dp
-                    ) {
-                        NavigationBarItem(
-                            selected = currentTab == MainTab.CATALOG,
-                            onClick = { viewModel.selectTab(MainTab.CATALOG) },
-                            icon = { Icon(Icons.Default.GridView, contentDescription = "الكتالوج الهرمي") },
-                            label = { Text("الكتالوج", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = TextDark,
-                                selectedTextColor = GoldPrimary,
-                                indicatorColor = GoldPrimary,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted
-                            ),
-                            modifier = Modifier.testTag("nav_tab_catalog")
-                        )
-
-                        NavigationBarItem(
-                            selected = currentTab == MainTab.INVENTORY,
-                            onClick = { viewModel.selectTab(MainTab.INVENTORY) },
-                            icon = { Icon(Icons.Default.Inventory2, contentDescription = "المخزون الشامل") },
-                            label = { Text("المخزون", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = TextDark,
-                                selectedTextColor = GoldPrimary,
-                                indicatorColor = GoldPrimary,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted
-                            ),
-                            modifier = Modifier.testTag("nav_tab_inventory")
-                        )
-
-                        NavigationBarItem(
-                            selected = currentTab == MainTab.SALES_LOG,
-                            onClick = { viewModel.selectTab(MainTab.SALES_LOG) },
-                            icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "قسم الفواتير والمبيعات") },
-                            label = { Text("الفواتير", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = TextDark,
-                                selectedTextColor = GoldPrimary,
-                                indicatorColor = GoldPrimary,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted
-                            ),
-                            modifier = Modifier.testTag("nav_tab_sales")
-                        )
-
-                        NavigationBarItem(
-                            selected = currentTab == MainTab.RETURNS,
-                            onClick = { viewModel.selectTab(MainTab.RETURNS) },
-                            icon = { Icon(Icons.AutoMirrored.Filled.AssignmentReturn, contentDescription = "قسم المرتجعات") },
-                            label = { Text("المرتجعات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = TextDark,
-                                selectedTextColor = GoldPrimary,
-                                indicatorColor = GoldPrimary,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted
-                            ),
-                            modifier = Modifier.testTag("nav_tab_returns")
-                        )
-
-                        NavigationBarItem(
-                            selected = currentTab == MainTab.DAMAGE_REPAIR,
-                            onClick = { viewModel.selectTab(MainTab.DAMAGE_REPAIR) },
-                            icon = { Icon(Icons.Default.Build, contentDescription = "قسم الهالك والإصلاح") },
-                            label = { Text("الهالك والإصلاح", fontWeight = FontWeight.Bold, fontSize = 10.sp) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = TextDark,
-                                selectedTextColor = GoldPrimary,
-                                indicatorColor = GoldPrimary,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted
-                            ),
-                            modifier = Modifier.testTag("nav_tab_damage_repair")
-                        )
-
-                        if (isAdmin) {
-                            NavigationBarItem(
-                                selected = currentTab == MainTab.ACCOUNTS,
-                                onClick = { viewModel.selectTab(MainTab.ACCOUNTS) },
-                                icon = { Icon(Icons.Default.AccountBalance, contentDescription = "كشوف الحسابات") },
-                                label = { Text("الحسابات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = TextDark,
-                                    selectedTextColor = GoldPrimary,
-                                    indicatorColor = GoldPrimary,
-                                    unselectedIconColor = TextMuted,
-                                    unselectedTextColor = TextMuted
-                                ),
-                                modifier = Modifier.testTag("nav_tab_accounts")
-                            )
+                AlBashiriBottomNavBar(
+                    currentTab = currentTab,
+                    isAdmin = isAdmin,
+                    onTabSelected = { viewModel.selectTab(it) },
+                    onBasheerClick = {
+                        ttsHelper.stop()
+                        showBasheerDialog = true
+                        val hasPerm = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (hasPerm) {
+                            launchSystemSpeechIntent()
+                        } else {
+                            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
-
-                        NavigationBarItem(
-                            selected = currentTab == MainTab.SETTINGS,
-                            onClick = { viewModel.selectTab(MainTab.SETTINGS) },
-                            icon = { Icon(Icons.Default.Settings, contentDescription = "الإعدادات") },
-                            label = { Text("الإعدادات", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = TextDark,
-                                selectedTextColor = GoldPrimary,
-                                indicatorColor = GoldPrimary,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted
-                            ),
-                            modifier = Modifier.testTag("nav_tab_settings")
-                        )
-                    }
-                }
+                    },
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = CharcoalBackground
@@ -563,7 +502,11 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                                 if (isTtsOperationsEnabled) ttsHelper.speakProductAdded()
                             },
                             onUpdateModel = { viewModel.updateModel(it) },
-                            onDeleteModel = { viewModel.deleteModel(it) }
+                            onDeleteModel = { viewModel.deleteModel(it) },
+                            onOpenCreateInvoice = { viewModel.openCreateInvoiceScreen() },
+                            onNavigateToTab = { viewModel.selectTab(it) },
+                            todaySalesTotal = totalSalesSum,
+                            todayInvoicesCount = totalInvoicesCount
                         )
                     }
 
@@ -884,26 +827,6 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                     }
                 }
 
-                // FIXED PROMINENT CIRCULAR VOICE ASSISTANT BUTTON "بشير"
-                if (currentTab != MainTab.RECYCLE_BIN) {
-                    BasheerFloatingButton(
-                        onClick = {
-                            ttsHelper.stop()
-                            val hasPerm = ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.RECORD_AUDIO
-                            ) == PackageManager.PERMISSION_GRANTED
-                            if (hasPerm) {
-                                launchSystemSpeechIntent()
-                            } else {
-                                recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                            }
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(16.dp)
-                    )
-                }
 
                 // Basheer Voice Assistant Modal Dialog
                 if (showBasheerDialog) {
@@ -1095,7 +1018,440 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                         onDismiss = { showNoPrinterDialog = false }
                     )
                 }
+
+                // Notifications Summary Modal Dialog
+                if (showNotificationsDialog) {
+                    NotificationsSummaryDialog(
+                        lowStockCount = lowStockCount,
+                        lowStockModels = lowStockModels,
+                        recycleBinCount = recycleBinCount,
+                        savedPrinterName = savedPrinter?.name,
+                        onNavigateToInventory = { viewModel.selectTab(MainTab.INVENTORY) },
+                        onNavigateToRecycleBin = { viewModel.selectTab(MainTab.RECYCLE_BIN) },
+                        onNavigateToSettings = { viewModel.selectTab(MainTab.SETTINGS) },
+                        onDismiss = { showNotificationsDialog = false }
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun NotificationsSummaryDialog(
+    lowStockCount: Int,
+    lowStockModels: List<ProductModelEntity>,
+    recycleBinCount: Int,
+    savedPrinterName: String?,
+    onNavigateToInventory: () -> Unit,
+    onNavigateToRecycleBin: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Notifications,
+                    contentDescription = null,
+                    tint = GoldPrimary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "مركز التنبيهات والإشعارات",
+                    fontFamily = CairoFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = TextWhite,
+                    fontSize = 16.sp
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Alert 1: Low Stock
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = NavySurface),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (lowStockCount > 0) WarningAmber.copy(alpha = 0.6f) else GlassBorder
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onDismiss()
+                            onNavigateToInventory()
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            if (lowStockCount > 0) Icons.Default.Warning else Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = if (lowStockCount > 0) WarningAmber else SuccessGreen,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "تنبيهات المخزون والنواقص",
+                                fontFamily = CairoFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                color = TextWhite,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = if (lowStockCount > 0)
+                                    "يوجد $lowStockCount جهاز أوشك على النفاد (<= 2 قطعة)"
+                                else
+                                    "المخزون متوفر بجميع الأصناف",
+                                fontFamily = CairoFontFamily,
+                                color = if (lowStockCount > 0) WarningAmber else TextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+
+                // Alert 2: Recycle Bin
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = NavySurface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onDismiss()
+                            onNavigateToRecycleBin()
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Recycling,
+                            contentDescription = null,
+                            tint = ElectricBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "سلة المحذوفات",
+                                fontFamily = CairoFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                color = TextWhite,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = if (recycleBinCount > 0)
+                                    "يوجد $recycleBinCount عناصر في سلة المحذوفات"
+                                else
+                                    "لا توجد عناصر محذوفة حالياً",
+                                fontFamily = CairoFontFamily,
+                                color = TextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+
+                // Alert 3: Printer Status
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = NavySurface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onDismiss()
+                            onNavigateToSettings()
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Print,
+                            contentDescription = null,
+                            tint = GoldSecondary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "حالة الطابعة الحرارية",
+                                fontFamily = CairoFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                color = TextWhite,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = if (savedPrinterName != null)
+                                    "متصلة: $savedPrinterName"
+                                else
+                                    "غير متصلة (انقر للربط عبر البلوتوث)",
+                                fontFamily = CairoFontFamily,
+                                color = TextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "إغلاق",
+                    fontFamily = CairoFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = GoldPrimary
+                )
+            }
+        },
+        containerColor = NavySurfaceElevated
+    )
+}
+
+@Composable
+private fun AlBashiriBottomNavBar(
+    currentTab: MainTab,
+    isAdmin: Boolean,
+    onTabSelected: (MainTab) -> Unit,
+    onBasheerClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = Color(0xF2080F1D),
+        tonalElevation = 8.dp,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.2.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color.Transparent,
+                                GoldBorderGlow,
+                                ElectricBlue.copy(alpha = 0.4f),
+                                GoldBorderGlow,
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+
+            // Symmetrical 7-item layout with Basheer in the exact center
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(66.dp)
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 1. Catalog / Home
+                BottomNavTabItem(
+                    selected = currentTab == MainTab.CATALOG,
+                    onClick = { onTabSelected(MainTab.CATALOG) },
+                    icon = Icons.Default.GridView,
+                    label = "الرئيسية",
+                    testTag = "nav_tab_catalog",
+                    modifier = Modifier.weight(1f)
+                )
+
+                // 2. Inventory
+                BottomNavTabItem(
+                    selected = currentTab == MainTab.INVENTORY,
+                    onClick = { onTabSelected(MainTab.INVENTORY) },
+                    icon = Icons.Default.Inventory2,
+                    label = "المخزون",
+                    testTag = "nav_tab_inventory",
+                    modifier = Modifier.weight(1f)
+                )
+
+                // 3. Invoices (Sales Log)
+                BottomNavTabItem(
+                    selected = currentTab == MainTab.SALES_LOG,
+                    onClick = { onTabSelected(MainTab.SALES_LOG) },
+                    icon = Icons.Default.ReceiptLong,
+                    label = "الفواتير",
+                    testTag = "nav_tab_sales",
+                    modifier = Modifier.weight(1f)
+                )
+
+                // 4. Center: Voice Assistant "Basheer" (في المنتصف تماماً مع الحلقة الذهبية المزدوجة)
+                BasheerBottomNavTabItem(
+                    onClick = onBasheerClick,
+                    modifier = Modifier.weight(1.2f)
+                )
+
+                // 5. Returns
+                BottomNavTabItem(
+                    selected = currentTab == MainTab.RETURNS,
+                    onClick = { onTabSelected(MainTab.RETURNS) },
+                    icon = Icons.AutoMirrored.Filled.AssignmentReturn,
+                    label = "المرتجعات",
+                    testTag = "nav_tab_returns",
+                    modifier = Modifier.weight(1f)
+                )
+
+                // 6. Damage & Repair
+                BottomNavTabItem(
+                    selected = currentTab == MainTab.DAMAGE_REPAIR,
+                    onClick = { onTabSelected(MainTab.DAMAGE_REPAIR) },
+                    icon = Icons.Default.Build,
+                    label = "الهالك",
+                    secondaryLabel = "والصيانة",
+                    testTag = "nav_tab_damage_repair",
+                    modifier = Modifier.weight(1f)
+                )
+
+                // 7. Accounts (for Admin) or Settings (for Seller)
+                if (isAdmin) {
+                    BottomNavTabItem(
+                        selected = currentTab == MainTab.ACCOUNTS,
+                        onClick = { onTabSelected(MainTab.ACCOUNTS) },
+                        icon = Icons.Default.AccountBalance,
+                        label = "الحسابات",
+                        testTag = "nav_tab_accounts",
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    BottomNavTabItem(
+                        selected = currentTab == MainTab.SETTINGS,
+                        onClick = { onTabSelected(MainTab.SETTINGS) },
+                        icon = Icons.Default.Settings,
+                        label = "الإعدادات",
+                        testTag = "nav_tab_settings",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BottomNavTabItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: ImageVector,
+    label: String,
+    secondaryLabel: String? = null,
+    testTag: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 2.dp)
+            .testTag(testTag),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(width = 36.dp, height = 26.dp)
+                .clip(RoundedCornerShape(13.dp))
+                .background(if (selected) GoldPrimary.copy(alpha = 0.2f) else Color.Transparent)
+                .border(
+                    if (selected) 1.dp else 0.dp,
+                    if (selected) GoldPrimary.copy(alpha = 0.6f) else Color.Transparent,
+                    RoundedCornerShape(13.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                modifier = Modifier.size(19.dp),
+                tint = if (selected) GoldPrimary else TextMuted
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            fontFamily = CairoFontFamily,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            fontSize = 9.5.sp,
+            color = if (selected) GoldPrimary else TextMuted,
+            maxLines = 1,
+            textAlign = TextAlign.Center
+        )
+        if (secondaryLabel != null) {
+            Text(
+                text = secondaryLabel,
+                fontFamily = CairoFontFamily,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                fontSize = 8.5.sp,
+                color = if (selected) GoldPrimary else TextMuted,
+                maxLines = 1,
+                lineHeight = 9.sp,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+private fun BasheerBottomNavTabItem(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 2.dp)
+            .testTag("nav_tab_basheer"),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(46.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF0D1728))
+                .border(1.8.dp, GoldPrimary, CircleShape)
+                .padding(2.5.dp)
+                .border(0.8.dp, GoldSecondary.copy(alpha = 0.7f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Mic,
+                contentDescription = "المساعد بشير",
+                modifier = Modifier.size(23.dp),
+                tint = GoldPrimary
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = "بشير",
+            fontFamily = CairoFontFamily,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 11.sp,
+            color = GoldPrimary,
+            maxLines = 1,
+            textAlign = TextAlign.Center
+        )
     }
 }

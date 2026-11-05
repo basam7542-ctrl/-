@@ -690,6 +690,7 @@ fun InventoryScreen(
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 110.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(filteredModels, key = { it.id }) { model ->

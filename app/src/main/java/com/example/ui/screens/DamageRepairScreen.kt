@@ -185,7 +185,7 @@ fun DamageRepairScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "الهالك والتالف والإصلاح",
                         color = TextWhite,
@@ -396,7 +396,8 @@ fun DamageRepairScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 110.dp)
                 ) {
                     items(filteredRecords, key = { it.id }) { record ->
                         DamageRecordCard(

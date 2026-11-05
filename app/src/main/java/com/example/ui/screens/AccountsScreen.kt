@@ -453,6 +453,7 @@ fun AccountsScreen(
 
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 110.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(suppliers, key = { it.id }) { supplier ->
@@ -614,6 +615,7 @@ fun AccountsScreen(
 
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 110.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(merchants, key = { it.id }) { merchant ->
@@ -788,6 +790,7 @@ fun AccountsScreen(
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 110.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(customers, key = { it.id }) { customer ->

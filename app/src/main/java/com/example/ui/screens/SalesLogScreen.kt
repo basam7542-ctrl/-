@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -59,6 +62,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.InvoiceEntity
@@ -215,60 +219,140 @@ fun SalesLogScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(CircleShape)
-                                    .background(GoldContainer)
-                                    .border(1.dp, GoldPrimary, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.ReceiptLong, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(24.dp))
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "شاشة إدارة الفواتير والمبيعات",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontFamily = CairoFontFamily,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextWhite
-                                )
-                                Text(
-                                    text = "استخراج فواتير متعددة الأصناف وسجل المعاملات",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontFamily = CairoFontFamily,
-                                    color = GoldSecondary,
-                                    fontSize = 11.sp
-                                )
-                            }
-                        }
+                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                        if (maxWidth < 500.dp) {
+                            // Responsive Mobile Layout: Title header on top, prominent full-width action button below
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(GoldContainer)
+                                            .border(1.dp, GoldPrimary, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.ReceiptLong, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(22.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "شاشة إدارة الفواتير والمبيعات",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontFamily = CairoFontFamily,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextWhite,
+                                            fontSize = 15.sp
+                                        )
+                                        Text(
+                                            text = "استخراج فواتير متعددة الأصناف وسجل المعاملات",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontFamily = CairoFontFamily,
+                                            color = GoldSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
 
-                        // PROMINENT BUTTON: «استخراج فاتورة جديدة»
-                        Button(
-                            onClick = onOpenCreateInvoice,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = GoldPrimary,
-                                contentColor = TextDark
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                            modifier = Modifier.testTag("create_new_invoice_button")
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp), tint = TextDark)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "استخراج فاتورة جديدة",
-                                fontFamily = CairoFontFamily,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 13.sp
-                            )
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Button(
+                                    onClick = onOpenCreateInvoice,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = GoldPrimary,
+                                        contentColor = TextDark
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("create_new_invoice_button")
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp), tint = TextDark)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "استخراج فاتورة جديدة",
+                                        fontFamily = CairoFontFamily,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 14.sp,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        softWrap = true
+                                    )
+                                }
+                            }
+                        } else {
+                            // Wide Screen / Tablet Layout: Side-by-side with ample button width
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(GoldContainer)
+                                            .border(1.dp, GoldPrimary, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.ReceiptLong, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(24.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "شاشة إدارة الفواتير والمبيعات",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontFamily = CairoFontFamily,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextWhite
+                                        )
+                                        Text(
+                                            text = "استخراج فواتير متعددة الأصناف وسجل المعاملات",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontFamily = CairoFontFamily,
+                                            color = GoldSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Button(
+                                    onClick = onOpenCreateInvoice,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = GoldPrimary,
+                                        contentColor = TextDark
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                                    modifier = Modifier
+                                        .widthIn(min = 200.dp)
+                                        .testTag("create_new_invoice_button")
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp), tint = TextDark)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "استخراج فاتورة جديدة",
+                                        fontFamily = CairoFontFamily,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 14.sp,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        softWrap = true
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -519,6 +603,7 @@ fun SalesLogScreen(
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(bottom = 110.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(filteredInvoices, key = { it.invoice.id }) { invoiceWithItems ->

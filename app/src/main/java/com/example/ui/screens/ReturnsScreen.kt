@@ -219,7 +219,7 @@ fun ReturnsScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "قسم إدارة المرتجعات",
                     fontFamily = CairoFontFamily,
@@ -484,7 +484,8 @@ fun ReturnsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag("returns_list"),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 110.dp)
             ) {
                 items(filteredList, key = { it.returnRecord.id }) { returnWithItems ->
                     ReturnItemCard(
