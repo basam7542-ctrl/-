@@ -720,7 +720,7 @@ fun CatalogScreen(
 
                                             Spacer(modifier = Modifier.height(10.dp))
 
-                                            // Golden Pill Button: «استخراج فاتورة جديدة»
+                                            // Golden Pill Button: «استخراج فاتورة جديدة» (تطابق لوني وشكلي كامل مع الصورة)
                                             Button(
                                                 onClick = onOpenCreateInvoice,
                                                 colors = ButtonDefaults.buttonColors(
@@ -730,18 +730,18 @@ fun CatalogScreen(
                                                     horizontal = 14.dp,
                                                     vertical = 8.dp
                                                 ),
-                                                shape = RoundedCornerShape(24.dp),
+                                                shape = RoundedCornerShape(30.dp),
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .height(46.dp)
+                                                    .height(48.dp)
                                                     .background(
                                                         Brush.horizontalGradient(
                                                             listOf(
-                                                                Color(0xFFF3C64F),
-                                                                Color(0xFFD4AF37)
+                                                                Color(0xFFF5CF6B),
+                                                                Color(0xFFE5B63E)
                                                             )
                                                         ),
-                                                        RoundedCornerShape(24.dp)
+                                                        RoundedCornerShape(30.dp)
                                                     )
                                                     .testTag("home_create_new_invoice_button")
                                             ) {
@@ -750,25 +750,25 @@ fun CatalogScreen(
                                                     horizontalArrangement = Arrangement.Center
                                                 ) {
                                                     Icon(
-                                                        Icons.Default.ReceiptLong,
+                                                        Icons.AutoMirrored.Filled.ArrowBack,
                                                         contentDescription = null,
-                                                        modifier = Modifier.size(18.dp),
-                                                        tint = TextDark
+                                                        modifier = Modifier.size(16.dp),
+                                                        tint = Color(0xFF070B14)
                                                     )
                                                     Spacer(modifier = Modifier.width(6.dp))
                                                     Text(
                                                         text = "استخراج فاتورة جديدة",
                                                         fontFamily = CairoFontFamily,
                                                         fontWeight = FontWeight.ExtraBold,
-                                                        fontSize = 13.sp,
-                                                        color = TextDark
+                                                        fontSize = 14.sp,
+                                                        color = Color(0xFF070B14)
                                                     )
-                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Spacer(modifier = Modifier.width(8.dp))
                                                     Icon(
-                                                        Icons.AutoMirrored.Filled.ArrowBack,
+                                                        Icons.Default.ReceiptLong,
                                                         contentDescription = null,
-                                                        modifier = Modifier.size(14.dp),
-                                                        tint = TextDark
+                                                        modifier = Modifier.size(20.dp),
+                                                        tint = Color(0xFF070B14)
                                                     )
                                                 }
                                             }
@@ -786,8 +786,8 @@ fun CatalogScreen(
                                         androidx.compose.material3.OutlinedButton(
                                             onClick = { if (firstAvailableModel != null) onOpenSale(firstAvailableModel) },
                                             enabled = firstAvailableModel != null,
-                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = GoldPrimary),
-                                            border = androidx.compose.foundation.BorderStroke(1.dp, GoldPrimary.copy(alpha = 0.7f)),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFF4CD68)),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x80F4CD68)),
                                             shape = RoundedCornerShape(10.dp),
                                             modifier = Modifier.weight(1f).height(38.dp)
                                         ) {
@@ -798,8 +798,8 @@ fun CatalogScreen(
 
                                         androidx.compose.material3.OutlinedButton(
                                             onClick = { onNavigateToTab(com.example.ui.MainTab.SALES_LOG) },
-                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ElectricBlue),
-                                            border = androidx.compose.foundation.BorderStroke(1.dp, ElectricBlue.copy(alpha = 0.7f)),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF2997FF)),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x802997FF)),
                                             shape = RoundedCornerShape(10.dp),
                                             modifier = Modifier.weight(1f).height(38.dp)
                                         ) {
@@ -829,8 +829,8 @@ fun CatalogScreen(
                                         value = if (todaySalesTotal > 0) "${numberFormat.format(todaySalesTotal.toInt())}" else "850",
                                         trend = "↑ 18%",
                                         icon = Icons.Default.ShoppingCart,
-                                        accentColor = ElectricBlue,
-                                        gradientColors = listOf(Color(0xCC0E234B), Color(0xCC08142C)),
+                                        accentColor = Color(0xFF2997FF),
+                                        gradientColors = listOf(Color(0xE609204A), Color(0xF2051126)),
                                         modifier = Modifier.weight(1f)
                                     )
 
@@ -840,8 +840,8 @@ fun CatalogScreen(
                                         value = if (totalUnitsCount > 0) "${numberFormat.format(totalUnitsCount)}" else "1,250",
                                         trend = "↑ 12%",
                                         icon = Icons.Default.Inventory2,
-                                        accentColor = GoldPrimary,
-                                        gradientColors = listOf(Color(0xCC2A2413), Color(0xCC111422)),
+                                        accentColor = Color(0xFFFFC837),
+                                        gradientColors = listOf(Color(0xE6241D10), Color(0xF20A0E1C)),
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -857,8 +857,8 @@ fun CatalogScreen(
                                         value = if (todaySalesTotal > 0) "${numberFormat.format((todaySalesTotal * 1.15).toInt())}" else "12,500",
                                         trend = "↑ 15%",
                                         icon = Icons.Default.AccountBalance,
-                                        accentColor = SuccessGreen,
-                                        gradientColors = listOf(Color(0xCC0C2B22), Color(0xCC0A171D)),
+                                        accentColor = Color(0xFF00E676),
+                                        gradientColors = listOf(Color(0xE608261E), Color(0xF2051216)),
                                         modifier = Modifier.weight(1f)
                                     )
 
@@ -868,8 +868,8 @@ fun CatalogScreen(
                                         value = if (todayInvoicesCount > 0) "$todayInvoicesCount" else "325",
                                         trend = "↑ 10%",
                                         icon = Icons.Default.ReceiptLong,
-                                        accentColor = PurpleAccent,
-                                        gradientColors = listOf(Color(0xCC281438), Color(0xCC120F24)),
+                                        accentColor = Color(0xFFBD5BFF),
+                                        gradientColors = listOf(Color(0xE627133E), Color(0xF20D081D)),
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -904,40 +904,40 @@ fun CatalogScreen(
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     HomeShortcutItem(
                                         title = "المخزون",
                                         icon = Icons.Default.Inventory2,
-                                        accentColor = GoldPrimary,
+                                        accentColor = Color(0xFFFFC837),
                                         onClick = { onNavigateToTab(com.example.ui.MainTab.INVENTORY) },
                                         modifier = Modifier.weight(1f)
                                     )
                                     HomeShortcutItem(
                                         title = "الفواتير",
                                         icon = Icons.Default.ReceiptLong,
-                                        accentColor = GoldSecondary,
+                                        accentColor = Color(0xFFFFC837),
                                         onClick = { onNavigateToTab(com.example.ui.MainTab.SALES_LOG) },
                                         modifier = Modifier.weight(1f)
                                     )
                                     HomeShortcutItem(
                                         title = "التقارير",
                                         icon = Icons.Default.Assessment,
-                                        accentColor = ElectricBlue,
+                                        accentColor = Color(0xFF2997FF),
                                         onClick = { onNavigateToTab(com.example.ui.MainTab.ACCOUNTS) },
                                         modifier = Modifier.weight(1f)
                                     )
                                     HomeShortcutItem(
                                         title = "العملاء",
                                         icon = Icons.Default.Person,
-                                        accentColor = ElectricBlue,
+                                        accentColor = Color(0xFF2997FF),
                                         onClick = { onNavigateToTab(com.example.ui.MainTab.ACCOUNTS) },
                                         modifier = Modifier.weight(1f)
                                     )
                                     HomeShortcutItem(
                                         title = "الإعدادات",
                                         icon = Icons.Default.Settings,
-                                        accentColor = TextMuted,
+                                        accentColor = Color(0xFF2997FF),
                                         onClick = { onNavigateToTab(com.example.ui.MainTab.SETTINGS) },
                                         modifier = Modifier.weight(1f)
                                     )
@@ -1456,19 +1456,19 @@ private fun HomeStatCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.height(102.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.5f)),
-        shape = RoundedCornerShape(16.dp)
+        border = androidx.compose.foundation.BorderStroke(1.2.dp, accentColor.copy(alpha = 0.6f)),
+        shape = RoundedCornerShape(20.dp)
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .background(Brush.verticalGradient(gradientColors))
-                .padding(horizontal = 12.dp, vertical = 12.dp)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1479,39 +1479,41 @@ private fun HomeStatCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(accentColor.copy(alpha = 0.18f))
-                            .border(1.dp, accentColor.copy(alpha = 0.5f), RoundedCornerShape(10.dp)),
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(accentColor.copy(alpha = 0.16f))
+                            .border(1.dp, accentColor.copy(alpha = 0.45f), RoundedCornerShape(13.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             icon,
                             contentDescription = null,
                             tint = accentColor,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = trend,
                         fontFamily = CairoFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
-                        color = SuccessGreen
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 12.sp,
+                        color = Color(0xFF00E676)
                     )
                 }
 
-                // Right Column: Value + Title label
+                // Right Column: Big Number Value + Title label
                 Column(
-                    horizontalAlignment = Alignment.End
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Text(
                         text = value,
                         fontFamily = CairoFontFamily,
                         fontWeight = FontWeight.ExtraBold,
-                        color = TextWhite,
-                        fontSize = 18.sp,
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        lineHeight = 28.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -1519,9 +1521,9 @@ private fun HomeStatCard(
                     Text(
                         text = title,
                         fontFamily = CairoFontFamily,
-                        fontSize = 11.sp,
-                        color = TextMuted,
-                        fontWeight = FontWeight.Medium
+                        fontSize = 12.5.sp,
+                        color = Color(0xFFA6B7D4),
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -1539,40 +1541,41 @@ private fun HomeShortcutItem(
 ) {
     Card(
         modifier = modifier
+            .height(72.dp)
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Color(0xCC111C34)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x334E71A8)),
-        shape = RoundedCornerShape(14.dp)
+        colors = CardDefaults.cardColors(containerColor = Color(0xDD0E1A33)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x403F5E8E)),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp, horizontal = 4.dp),
+                .fillMaxSize()
+                .padding(vertical = 8.dp, horizontal = 2.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF192645))
-                    .border(0.8.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(10.dp)),
+                    .clip(RoundedCornerShape(11.dp))
+                    .background(Color(0xFF162544))
+                    .border(0.8.dp, accentColor.copy(alpha = 0.45f), RoundedCornerShape(11.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     icon,
                     contentDescription = title,
                     tint = accentColor,
-                    modifier = Modifier.size(19.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(5.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = title,
                 fontFamily = CairoFontFamily,
                 fontWeight = FontWeight.Bold,
                 fontSize = 11.sp,
-                color = TextWhite,
+                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

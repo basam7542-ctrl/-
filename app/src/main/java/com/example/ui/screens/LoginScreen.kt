@@ -101,6 +101,8 @@ import com.example.ui.theme.NavySurfaceVariant
 import com.example.ui.theme.TextDark
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextWhite
+import androidx.compose.foundation.layout.systemBarsPadding
+import com.example.ui.components.FutureGateAuraBackground
 
 data class AccountOption(
     val id: String,
@@ -132,10 +134,10 @@ fun LoginScreen(
 ) {
     var stage by rememberSaveable { mutableStateOf(StartupScreenStage.WELCOME) }
 
-    Box(
+    FutureGateAuraBackground(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyGradientBrush)
+            .systemBarsPadding()
     ) {
         AnimatedContent(
             targetState = stage,

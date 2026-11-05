@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,10 +56,6 @@ import com.example.ui.theme.CairoFontFamily
 import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.ErrorRed
 import com.example.ui.theme.GlassBorder
-import com.example.ui.theme.GoldBorderGlow
-import com.example.ui.theme.GoldPrimary
-import com.example.ui.theme.GoldSecondary
-import com.example.ui.theme.NavySurface
 import com.example.ui.theme.NavySurfaceElevated
 import com.example.ui.theme.TextDark
 import com.example.ui.theme.TextMuted
@@ -65,12 +64,13 @@ import com.example.ui.theme.TextWhite
 /**
  * Top App Bar for "معرض البشيري للأجهزة الكهربائية"
  *
- * Faithfully matches the reference mockup:
- * 1. Notifications Bell on the left with glowing red badge.
- * 2. User profile pill: circular avatar + "أهلاً بك / مدير النظام" + down chevron dropdown.
- * 3. Store Brand in Center: "البشيري" (Gold ExtraBold) + "للأجهزة الكهربائية" (White).
- * 4. Royal Emblem on the right: Double gold ring circular badge with store logo.
- * 5. Dropdown menu supporting settings, recycle bin, and logout so zero features are lost.
+ * Exact visual match to the reference mockup with BESHEER FUTURE GATE enhancements:
+ * 1. Warm gold notification bell on far left with red badge "3".
+ * 2. Translucent glass user profile capsule: avatar circle + "أهلاً بك / مدير النظام" + down chevron.
+ * 3. Store Brand in Center: "البشيري" (Cairo ExtraBold #F4CD68, 23sp) + "للأجهزة الكهربائية" (White, 13sp).
+ * 4. Luxury circular Al-Bashiri royal emblem on far right with gold double rings.
+ * 5. Dynamic dropdown menu for settings, recycle bin, and logout so zero features are lost.
+ * 6. Explicit WindowInsets.statusBars handling for notch/safe area compliance.
  */
 @Composable
 fun StoreTopAppBar(
@@ -90,16 +90,18 @@ fun StoreTopAppBar(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFF040711),
-                        Color(0xFF091224)
+                        Color(0xFF020716),
+                        Color(0xFF071228),
+                        Color(0xFF030919)
                     )
                 )
             )
+            .windowInsetsPadding(WindowInsets.statusBars)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -108,24 +110,24 @@ fun StoreTopAppBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // 1. Notifications Bell with glowing red badge count (matching reference mockup)
+                // 1. Warm Metallic Gold Notifications Bell with Glowing Red Badge "3"
                 IconButton(
                     onClick = onNotificationsClick,
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(42.dp)
                         .testTag("top_bar_notifications_button")
                 ) {
-                    val displayCount = if (notificationsCount > 0) notificationsCount else 3 // Default 3 like mockup if 0
+                    val displayCount = if (notificationsCount > 0) notificationsCount else 3
                     BadgedBox(
                         badge = {
                             Badge(
-                                containerColor = ErrorRed,
+                                containerColor = Color(0xFFDD3B34),
                                 contentColor = TextWhite,
                                 modifier = Modifier.size(17.dp)
                             ) {
                                 Text(
                                     text = if (displayCount > 99) "99+" else "$displayCount",
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.ExtraBold,
                                     fontSize = 9.sp
                                 )
                             }
@@ -134,8 +136,8 @@ fun StoreTopAppBar(
                         Icon(
                             Icons.Default.Notifications,
                             contentDescription = "الإشعارات والتنبيهات",
-                            tint = GoldPrimary,
-                            modifier = Modifier.size(24.dp)
+                            tint = Color(0xFFF4C853),
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }
@@ -147,27 +149,27 @@ fun StoreTopAppBar(
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(22.dp))
-                                .background(Color(0xCC121E36))
-                                .border(1.dp, GlassBorder, RoundedCornerShape(22.dp))
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(Color(0xCC0E1A33))
+                                .border(1.dp, Color(0x403E5C8C), RoundedCornerShape(24.dp))
                                 .clickable { showUserMenu = true }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .padding(horizontal = 9.dp, vertical = 4.dp)
                                 .testTag("top_bar_user_profile_pill")
                         ) {
-                            // Circular Avatar
+                            // Circular Avatar with user icon
                             Box(
                                 modifier = Modifier
-                                    .size(30.dp)
+                                    .size(32.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF23314D))
-                                    .border(1.dp, GoldBorderGlow, CircleShape),
+                                    .background(Color(0xFF1E2F4F))
+                                    .border(1.dp, Color(0x80D4AF37), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = if (isAdmin) Icons.Default.Shield else Icons.Default.Person,
                                     contentDescription = null,
-                                    tint = GoldSecondary,
-                                    modifier = Modifier.size(16.dp)
+                                    tint = Color(0xFFE5B942),
+                                    modifier = Modifier.size(17.dp)
                                 )
                             }
 
@@ -177,7 +179,7 @@ fun StoreTopAppBar(
                                 Text(
                                     text = "أهلاً بك",
                                     fontFamily = CairoFontFamily,
-                                    color = TextMuted,
+                                    color = Color(0xFF8F9FB8),
                                     fontSize = 9.sp,
                                     lineHeight = 10.sp
                                 )
@@ -196,7 +198,7 @@ fun StoreTopAppBar(
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "قائمة المستخدم",
-                                tint = TextMuted,
+                                tint = Color(0xFF8F9FB8),
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -213,7 +215,7 @@ fun StoreTopAppBar(
                                 DropdownMenuItem(
                                     text = {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Default.Settings, contentDescription = null, tint = GoldSecondary, modifier = Modifier.size(18.dp))
+                                            Icon(Icons.Default.Settings, contentDescription = null, tint = Color(0xFFF4CD68), modifier = Modifier.size(18.dp))
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text("إعدادات المعرض", fontFamily = CairoFontFamily, color = TextWhite, fontSize = 12.sp)
                                         }
@@ -264,61 +266,52 @@ fun StoreTopAppBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Store Name in Cairo font (Metallic Gold + White)
+                // Store Name in Cairo font (Warm Metallic Gold + Clean White)
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "البشيري",
                         fontFamily = CairoFontFamily,
                         fontWeight = FontWeight.ExtraBold,
-                        color = GoldPrimary,
-                        fontSize = 21.sp,
-                        lineHeight = 24.sp
+                        color = Color(0xFFF4CD68),
+                        fontSize = 23.sp,
+                        lineHeight = 25.sp
                     )
                     Text(
                         text = "للأجهزة الكهربائية",
                         fontFamily = CairoFontFamily,
                         fontWeight = FontWeight.Bold,
-                        color = TextWhite,
-                        fontSize = 12.sp,
-                        lineHeight = 14.sp
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        lineHeight = 15.sp
                     )
                 }
 
-                // Royal Al-Bashiri Emblem with Double Concentric Gold Rings
-                Box(
-                    contentAlignment = Alignment.Center,
+                // Royal Al-Bashiri Emblem extracted directly from the reference mockup
+                Image(
+                    painter = painterResource(id = R.drawable.albashiri_emblem_royal),
+                    contentDescription = "شعار البشيري للأجهزة الكهربائية",
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(56.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF0C1424))
-                        .border(1.5.dp, GoldPrimary, CircleShape)
-                        .padding(2.5.dp)
-                        .border(0.8.dp, GoldSecondary.copy(alpha = 0.7f), CircleShape)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.albashiri_logo),
-                        contentDescription = "شعار البشيري للأجهزة الكهربائية",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                    )
-                }
+                )
             }
         }
 
-        // Luminous Golden & Electric Blue Wave Hairline
+        // Metallic Gold & Electric Blue Luminous Wave Ribbon
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(1.5.dp)
+                .height(1.8.dp)
                 .background(
                     Brush.horizontalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            GoldBorderGlow,
-                            ElectricBlue.copy(alpha = 0.4f),
-                            GoldBorderGlow,
+                            Color(0x33D4AF37),
+                            Color(0xFFE5B942),
+                            Color(0x8038BDF8),
+                            Color(0xFFE5B942),
+                            Color(0x33D4AF37),
                             Color.Transparent
                         )
                     )

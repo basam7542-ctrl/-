@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Inventory2
@@ -84,7 +85,9 @@ import com.example.data.local.SaleRecordEntity
 import com.example.ui.MainTab
 import com.example.ui.MainViewModel
 import com.example.ui.components.BasheerFloatingButton
+import com.example.ui.components.BasheerPulsingEnergyOrb
 import com.example.ui.components.BasheerVoiceAssistantDialog
+import com.example.ui.components.FutureGateAuraBackground
 import com.example.ui.components.InvoicePreviewDialog
 import com.example.ui.components.NoPrinterAlertDialog
 import com.example.ui.components.PostSaleReceiptDialog
@@ -465,7 +468,7 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = CharcoalBackground
         ) { innerPadding ->
-            Box(
+            FutureGateAuraBackground(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -1256,26 +1259,29 @@ private fun AlBashiriBottomNavBar(
                     )
             )
 
-            // Symmetrical 7-item layout with Basheer in the exact center
+            var showMoreDialog by remember { mutableStateOf(false) }
+
+            // Exact 5-item layout matching the reference mockup with Basheer in the center
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(66.dp)
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                    .height(68.dp)
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 1. Catalog / Home
+                // 1. Far Right: المزيد (Grid Icon)
+                val isMoreSelected = currentTab == MainTab.CATALOG || currentTab == MainTab.RETURNS || currentTab == MainTab.DAMAGE_REPAIR || currentTab == MainTab.SETTINGS
                 BottomNavTabItem(
-                    selected = currentTab == MainTab.CATALOG,
-                    onClick = { onTabSelected(MainTab.CATALOG) },
+                    selected = isMoreSelected,
+                    onClick = { showMoreDialog = true },
                     icon = Icons.Default.GridView,
-                    label = "الرئيسية",
-                    testTag = "nav_tab_catalog",
+                    label = "المزيد",
+                    testTag = "nav_tab_more",
                     modifier = Modifier.weight(1f)
                 )
 
-                // 2. Inventory
+                // 2. Right: المخزون (Warehouse Icon)
                 BottomNavTabItem(
                     selected = currentTab == MainTab.INVENTORY,
                     onClick = { onTabSelected(MainTab.INVENTORY) },
@@ -1285,7 +1291,13 @@ private fun AlBashiriBottomNavBar(
                     modifier = Modifier.weight(1f)
                 )
 
-                // 3. Invoices (Sales Log)
+                // 3. Center: Voice Assistant "Basheer" (نواة طاقة هولوجرامية متوهجة ونابضة)
+                BasheerPulsingEnergyOrb(
+                    onClick = onBasheerClick,
+                    modifier = Modifier.weight(1.25f)
+                )
+
+                // 4. Left: الفواتير (Invoices / Sales Log)
                 BottomNavTabItem(
                     selected = currentTab == MainTab.SALES_LOG,
                     onClick = { onTabSelected(MainTab.SALES_LOG) },
@@ -1295,53 +1307,122 @@ private fun AlBashiriBottomNavBar(
                     modifier = Modifier.weight(1f)
                 )
 
-                // 4. Center: Voice Assistant "Basheer" (في المنتصف تماماً مع الحلقة الذهبية المزدوجة)
-                BasheerBottomNavTabItem(
-                    onClick = onBasheerClick,
-                    modifier = Modifier.weight(1.2f)
-                )
-
-                // 5. Returns
+                // 5. Far Left: التقارير (Reports / Accounts)
                 BottomNavTabItem(
-                    selected = currentTab == MainTab.RETURNS,
-                    onClick = { onTabSelected(MainTab.RETURNS) },
-                    icon = Icons.AutoMirrored.Filled.AssignmentReturn,
-                    label = "المرتجعات",
-                    testTag = "nav_tab_returns",
+                    selected = currentTab == MainTab.ACCOUNTS,
+                    onClick = { onTabSelected(MainTab.ACCOUNTS) },
+                    icon = Icons.Default.Assessment,
+                    label = "التقارير",
+                    testTag = "nav_tab_reports",
                     modifier = Modifier.weight(1f)
                 )
+            }
 
-                // 6. Damage & Repair
-                BottomNavTabItem(
-                    selected = currentTab == MainTab.DAMAGE_REPAIR,
-                    onClick = { onTabSelected(MainTab.DAMAGE_REPAIR) },
-                    icon = Icons.Default.Build,
-                    label = "الهالك",
-                    secondaryLabel = "والصيانة",
-                    testTag = "nav_tab_damage_repair",
-                    modifier = Modifier.weight(1f)
+            if (showMoreDialog) {
+                AlertDialog(
+                    onDismissRequest = { showMoreDialog = false },
+                    containerColor = Color(0xF50D172B),
+                    shape = RoundedCornerShape(22.dp),
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.GridView, contentDescription = null, tint = Color(0xFFF4CD68))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("أقسام المعرض الإضافية", fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
+                        }
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onTabSelected(MainTab.CATALOG)
+                                        showMoreDialog = false
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = if (currentTab == MainTab.CATALOG) Color(0xFF1E3258) else Color(0xFF121E36)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (currentTab == MainTab.CATALOG) Color(0xFFF4CD68) else Color(0x33FFFFFF)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.GridView, contentDescription = null, tint = Color(0xFFF4CD68), modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text("الرئيسية (لوحة التحكم والمعرض)", fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                }
+                            }
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onTabSelected(MainTab.RETURNS)
+                                        showMoreDialog = false
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = if (currentTab == MainTab.RETURNS) Color(0xFF1E3258) else Color(0xFF121E36)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (currentTab == MainTab.RETURNS) Color(0xFFF4CD68) else Color(0x33FFFFFF)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.AssignmentReturn, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text("المرتجعات وإرجاع الأجهزة", fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                }
+                            }
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onTabSelected(MainTab.DAMAGE_REPAIR)
+                                        showMoreDialog = false
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = if (currentTab == MainTab.DAMAGE_REPAIR) Color(0xFF1E3258) else Color(0xFF121E36)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (currentTab == MainTab.DAMAGE_REPAIR) Color(0xFFF4CD68) else Color(0x33FFFFFF)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Build, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text("الهالك والصيانة والتوالف", fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                }
+                            }
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onTabSelected(MainTab.SETTINGS)
+                                        showMoreDialog = false
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = if (currentTab == MainTab.SETTINGS) Color(0xFF1E3258) else Color(0xFF121E36)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (currentTab == MainTab.SETTINGS) Color(0xFFF4CD68) else Color(0x33FFFFFF)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Settings, contentDescription = null, tint = Color(0xFF8F9FB8), modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text("إعدادات المعرض والطباعة", fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showMoreDialog = false }) {
+                            Text("إغلاق", fontFamily = CairoFontFamily, color = Color(0xFFF4CD68), fontWeight = FontWeight.Bold)
+                        }
+                    }
                 )
-
-                // 7. Accounts (for Admin) or Settings (for Seller)
-                if (isAdmin) {
-                    BottomNavTabItem(
-                        selected = currentTab == MainTab.ACCOUNTS,
-                        onClick = { onTabSelected(MainTab.ACCOUNTS) },
-                        icon = Icons.Default.AccountBalance,
-                        label = "الحسابات",
-                        testTag = "nav_tab_accounts",
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    BottomNavTabItem(
-                        selected = currentTab == MainTab.SETTINGS,
-                        onClick = { onTabSelected(MainTab.SETTINGS) },
-                        icon = Icons.Default.Settings,
-                        label = "الإعدادات",
-                        testTag = "nav_tab_settings",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
             }
         }
     }
@@ -1428,19 +1509,19 @@ private fun BasheerBottomNavTabItem(
     ) {
         Box(
             modifier = Modifier
-                .size(46.dp)
+                .size(48.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF0D1728))
-                .border(1.8.dp, GoldPrimary, CircleShape)
+                .background(Color(0xFF091222))
+                .border(2.dp, Color(0xFFFFD54F), CircleShape)
                 .padding(2.5.dp)
-                .border(0.8.dp, GoldSecondary.copy(alpha = 0.7f), CircleShape),
+                .border(1.dp, Color(0x99FFD54F), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Mic,
                 contentDescription = "المساعد بشير",
-                modifier = Modifier.size(23.dp),
-                tint = GoldPrimary
+                modifier = Modifier.size(25.dp),
+                tint = Color(0xFFFFD54F)
             )
         }
         Spacer(modifier = Modifier.height(2.dp))
@@ -1448,8 +1529,8 @@ private fun BasheerBottomNavTabItem(
             text = "بشير",
             fontFamily = CairoFontFamily,
             fontWeight = FontWeight.ExtraBold,
-            fontSize = 11.sp,
-            color = GoldPrimary,
+            fontSize = 11.5.sp,
+            color = Color(0xFFFFD54F),
             maxLines = 1,
             textAlign = TextAlign.Center
         )
