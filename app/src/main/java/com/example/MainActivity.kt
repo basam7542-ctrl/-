@@ -69,6 +69,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.ui.screens.cosmic.CosmicSolarSystemScreen
+import com.example.ui.screens.cosmic.CosmicProductsPlanetScreen
+import com.example.ui.screens.cosmic.CosmicPlanetaryTransitionOverlay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -427,90 +431,147 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
         }
         var showNotificationsDialog by remember { mutableStateOf(false) }
 
+        var isInsideProductsPlanet by rememberSaveable { mutableStateOf(false) }
+        var isZoomingIntoProducts by remember { mutableStateOf(false) }
+        var isZoomingOutFromProducts by remember { mutableStateOf(false) }
+
+        // BackHandler: when outside CATALOG, return to the Solar System
+        if (currentTab != MainTab.CATALOG) {
+            BackHandler {
+                viewModel.selectTab(MainTab.CATALOG)
+            }
+        }
+
+        val isSolarSystemActive = currentTab == MainTab.CATALOG && !isInsideProductsPlanet && !isZoomingIntoProducts && !isZoomingOutFromProducts
+
         Scaffold(
             topBar = {
-                StoreTopAppBar(
-                    currentUser = user,
-                    recycleBinCount = recycleBinCount,
-                    notificationsCount = lowStockCount,
-                    onNotificationsClick = { showNotificationsDialog = true },
-                    onRecycleBinClick = {
-                        previousTab = currentTab
-                        viewModel.selectTab(MainTab.RECYCLE_BIN)
-                    },
-                    onSettingsClick = {
-                        viewModel.selectTab(MainTab.SETTINGS)
-                    },
-                    onLogoutClick = { viewModel.logout() }
-                )
+                val shouldShowTopBar = currentTab != MainTab.CATALOG
+                if (shouldShowTopBar) {
+                    StoreTopAppBar(
+                        currentUser = user,
+                        recycleBinCount = recycleBinCount,
+                        notificationsCount = lowStockCount,
+                        onNotificationsClick = { showNotificationsDialog = true },
+                        onRecycleBinClick = {
+                            previousTab = currentTab
+                            viewModel.selectTab(MainTab.RECYCLE_BIN)
+                        },
+                        onSettingsClick = {
+                            viewModel.selectTab(MainTab.SETTINGS)
+                        },
+                        onLogoutClick = { viewModel.logout() }
+                    )
+                }
             },
             bottomBar = {
-                AlBashiriBottomNavBar(
-                    currentTab = currentTab,
-                    isAdmin = isAdmin,
-                    onTabSelected = { viewModel.selectTab(it) },
-                    onBasheerClick = {
-                        ttsHelper.stop()
-                        showBasheerDialog = true
-                        val hasPerm = ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.RECORD_AUDIO
-                        ) == PackageManager.PERMISSION_GRANTED
-                        if (hasPerm) {
-                            launchSystemSpeechIntent()
-                        } else {
-                            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        }
-                    },
-                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
-                )
+                val shouldShowBottomBar = currentTab != MainTab.CATALOG
+                if (shouldShowBottomBar) {
+                    AlBashiriBottomNavBar(
+                        currentTab = currentTab,
+                        isAdmin = isAdmin,
+                        onTabSelected = { viewModel.selectTab(it) },
+                        onBasheerClick = {
+                            ttsHelper.stop()
+                            showBasheerDialog = true
+                            val hasPerm = ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.RECORD_AUDIO
+                            ) == PackageManager.PERMISSION_GRANTED
+                            if (hasPerm) {
+                                launchSystemSpeechIntent()
+                            } else {
+                                recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        },
+                        modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                    )
+                }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = CharcoalBackground
         ) { innerPadding ->
-            FutureGateAuraBackground(
+            val contentPadding = if (currentTab == MainTab.CATALOG) androidx.compose.foundation.layout.PaddingValues(0.dp) else innerPadding
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(contentPadding)
             ) {
                 when (currentTab) {
                     MainTab.CATALOG -> {
-                        CatalogScreen(
-                            currentUser = user,
-                            categories = categories,
-                            brands = brands,
-                            products = products,
-                            models = models,
-                            selectedCategory = selectedCategory,
-                            selectedBrand = selectedBrand,
-                            selectedProduct = selectedProduct,
-                            searchQuery = catalogSearchQuery,
-                            onSearchChange = { viewModel.setCatalogSearchQuery(it) },
-                            onSelectCategory = { viewModel.selectCategory(it) },
-                            onSelectBrand = { viewModel.selectBrand(it) },
-                            onSelectProduct = { viewModel.selectProduct(it) },
-                            onNavigateBack = { viewModel.navigateCatalogBack() },
-                            onOpenSale = { viewModel.openSaleDialog(it) },
-                            onAddCategory = { viewModel.addCategory(it) },
-                            onDeleteCategory = { viewModel.deleteCategory(it) },
-                            onAddBrand = { name, catId -> viewModel.addBrand(name, catId) },
-                            onDeleteBrand = { viewModel.deleteBrand(it) },
-                            onAddProduct = { name, catId, catName, bId, bName ->
-                                viewModel.addProduct(name, catId, catName, bId, bName)
-                                if (isTtsOperationsEnabled) ttsHelper.speakProductAdded()
-                            },
-                            onDeleteProduct = { viewModel.deleteProduct(it) },
-                            onAddModel = { pId, pName, bName, cName, mName, fPrice, mPrice, stock, code ->
-                                viewModel.addModel(pId, pName, bName, cName, mName, fPrice, mPrice, stock, code)
-                                if (isTtsOperationsEnabled) ttsHelper.speakProductAdded()
-                            },
-                            onUpdateModel = { viewModel.updateModel(it) },
-                            onDeleteModel = { viewModel.deleteModel(it) },
-                            onOpenCreateInvoice = { viewModel.openCreateInvoiceScreen() },
-                            onNavigateToTab = { viewModel.selectTab(it) },
-                            todaySalesTotal = totalSalesSum,
-                            todayInvoicesCount = totalInvoicesCount
-                        )
+                        when {
+                            isZoomingIntoProducts -> {
+                                CosmicPlanetaryTransitionOverlay(
+                                    isZoomingIn = true,
+                                    onTransitionFinished = {
+                                        isZoomingIntoProducts = false
+                                        isInsideProductsPlanet = true
+                                    }
+                                )
+                            }
+                            isZoomingOutFromProducts -> {
+                                CosmicPlanetaryTransitionOverlay(
+                                    isZoomingIn = false,
+                                    onTransitionFinished = {
+                                        isZoomingOutFromProducts = false
+                                        isInsideProductsPlanet = false
+                                    }
+                                )
+                            }
+                            isInsideProductsPlanet -> {
+                                CosmicProductsPlanetScreen(
+                                    currentUser = user,
+                                    categories = categories,
+                                    brands = brands,
+                                    products = products,
+                                    models = models,
+                                    searchQuery = catalogSearchQuery,
+                                    onSearchChange = { viewModel.setCatalogSearchQuery(it) },
+                                    onOpenSale = { viewModel.openSaleDialog(it) },
+                                    onAddCategory = { viewModel.addCategory(it) },
+                                    onDeleteCategory = { viewModel.deleteCategory(it) },
+                                    onAddBrand = { name, catId -> viewModel.addBrand(name, catId) },
+                                    onDeleteBrand = { viewModel.deleteBrand(it) },
+                                    onAddProduct = { name, catId, catName, bId, bName ->
+                                        viewModel.addProduct(name, catId, catName, bId, bName)
+                                        if (isTtsOperationsEnabled) ttsHelper.speakProductAdded()
+                                    },
+                                    onDeleteProduct = { viewModel.deleteProduct(it) },
+                                    onAddModel = { pId, pName, bName, cName, mName, fPrice, mPrice, stock, code ->
+                                        viewModel.addModel(pId, pName, bName, cName, mName, fPrice, mPrice, stock, code)
+                                        if (isTtsOperationsEnabled) ttsHelper.speakProductAdded()
+                                    },
+                                    onUpdateModel = { viewModel.updateModel(it) },
+                                    onDeleteModel = { viewModel.deleteModel(it) },
+                                    onBackToSolarSystem = {
+                                        isZoomingOutFromProducts = true
+                                    }
+                                )
+                            }
+                            else -> {
+                                CosmicSolarSystemScreen(
+                                    onEnterProductsPlanet = {
+                                        isZoomingIntoProducts = true
+                                    },
+                                    onNavigateToTab = { targetTab ->
+                                        viewModel.selectTab(targetTab)
+                                    },
+                                    onBasheerClick = {
+                                        ttsHelper.stop()
+                                        showBasheerDialog = true
+                                        val hasPerm = ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.RECORD_AUDIO
+                                        ) == PackageManager.PERMISSION_GRANTED
+                                        if (hasPerm) {
+                                            launchSystemSpeechIntent()
+                                        } else {
+                                            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
 
                     MainTab.INVENTORY -> {

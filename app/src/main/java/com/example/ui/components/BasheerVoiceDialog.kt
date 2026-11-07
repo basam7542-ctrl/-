@@ -15,7 +15,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.R
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -1193,38 +1197,33 @@ fun PulsingMicrophoneVisualizer(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.size(130.dp)
+        modifier = Modifier.size(150.dp)
     ) {
-        if (isListening) {
-            Box(
-                modifier = Modifier
-                    .size((105 * pulseScale).dp)
-                    .clip(CircleShape)
-                    .background(GoldPrimary.copy(alpha = (glowAlpha * 0.4f).coerceIn(0.1f, 0.4f)))
-            )
-            val dynamicScale = 1.15f + (rmsLevel * 0.35f)
-            Box(
-                modifier = Modifier
-                    .size((90 * dynamicScale).dp)
-                    .clip(CircleShape)
-                    .background(GoldSecondary.copy(alpha = (glowAlpha * 0.6f).coerceIn(0.15f, 0.6f)))
-            )
-        }
+        // Cosmic magnetic flare orb from mockup
+        Image(
+            painter = painterResource(id = R.drawable.cosmic_bashir_orb),
+            contentDescription = "نواة بشير المغناطيسية",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .size(145.dp)
+                .scale(if (isListening) pulseScale else 1f)
+                .clickable { onMicClick() }
+        )
 
+        // Center mic / sound bars icon
         Box(
             modifier = Modifier
-                .size(72.dp)
+                .size(46.dp)
                 .clip(CircleShape)
-                .background(if (isListening) GoldPrimary else NavySurfaceElevated)
-                .border(2.5.dp, GoldPrimary, CircleShape)
+                .background(if (isListening) Color(0xCCFFD54F) else Color(0x990A1428))
                 .clickable { onMicClick() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = if (isListening) Icons.Default.Hearing else Icons.Default.Mic,
                 contentDescription = "تفعيل الصوت",
-                tint = if (isListening) TextDark else GoldPrimary,
-                modifier = Modifier.size(36.dp)
+                tint = if (isListening) Color(0xFF040916) else Color(0xFFFFD54F),
+                modifier = Modifier.size(26.dp)
             )
         }
     }
