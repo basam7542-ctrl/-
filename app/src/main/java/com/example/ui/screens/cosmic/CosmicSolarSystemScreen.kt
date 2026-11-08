@@ -129,8 +129,7 @@ data class CosmicPlanetDef(
  */
 @Composable
 fun CosmicSolarSystemScreen(
-    onEnterProductsPlanet: () -> Unit,
-    onNavigateToTab: (MainTab) -> Unit,
+    onEnterPlanet: (CosmicPlanetDef) -> Unit,
     onBasheerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -300,6 +299,40 @@ fun CosmicSolarSystemScreen(
         label = "wave_alpha"
     )
 
+    // Three balanced continuous orbital timelines for natural cosmic motion
+    // Inner orbit: 40s full cycle
+    val innerOrbitAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(40000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "inner_orbit_angle"
+    )
+
+    // Middle orbit: 65s full cycle
+    val middleOrbitAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(65000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "middle_orbit_angle"
+    )
+
+    // Outer orbit: 90s full cycle
+    val outerOrbitAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(90000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "outer_orbit_angle"
+    )
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -442,93 +475,114 @@ fun CosmicSolarSystemScreen(
                 }
             }
 
-            // 3. Balanced Planetary System (11 Planets with clear Arabic names)
+            // 3. Balanced Planetary System (11 Planets with real continuous orbital motion)
+            val innerRx = screenWidth * 0.36f
+            val innerRy = screenHeight * 0.18f
+            val middleRx = screenWidth * 0.44f
+            val middleRy = screenHeight * 0.25f
+            val outerRx = screenWidth * 0.47f
+            val outerRy = screenHeight * 0.30f
 
-            // Planet 1: المنتجات (Products - Featured with Golden Rings)
+            fun calculateOrbitalPosition(
+                baseDeg: Float,
+                currentRotationDeg: Float,
+                rx: Dp,
+                ry: Dp
+            ): Pair<Dp, Dp> {
+                val totalRad = Math.toRadians(((baseDeg + currentRotationDeg) % 360.0))
+                val px = centerX + (rx.value * Math.cos(totalRad).toFloat()).dp
+                val py = centerY + (ry.value * Math.sin(totalRad).toFloat()).dp
+                return Pair(px, py)
+            }
+
+            // --- Inner Orbit Planets (3 Planets: Products, Dashboard, Inventory) ---
+            val (p0X, p0Y) = calculateOrbitalPosition(0f, innerOrbitAngle, innerRx, innerRy)
             CosmicPlanetNode(
-                planet = planetsList[0],
-                xOffset = centerX + screenWidth * 0.26f,
-                yOffset = centerY - screenHeight * 0.17f,
+                planet = planetsList[0], // المنتجات
+                xOffset = p0X,
+                yOffset = p0Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 2: لوحة التحكم (Dashboard)
+            val (p1X, p1Y) = calculateOrbitalPosition(120f, innerOrbitAngle, innerRx, innerRy)
             CosmicPlanetNode(
-                planet = planetsList[1],
-                xOffset = centerX - screenWidth * 0.08f,
-                yOffset = centerY - screenHeight * 0.24f,
+                planet = planetsList[1], // لوحة التحكم
+                xOffset = p1X,
+                yOffset = p1Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 3: المخزون (Inventory)
+            val (p2X, p2Y) = calculateOrbitalPosition(240f, innerOrbitAngle, innerRx, innerRy)
             CosmicPlanetNode(
-                planet = planetsList[2],
-                xOffset = centerX + screenWidth * 0.32f,
-                yOffset = centerY - screenHeight * 0.01f,
+                planet = planetsList[2], // المخزون
+                xOffset = p2X,
+                yOffset = p2Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 4: المبيعات والفواتير (Sales & Invoices)
+            // --- Middle Orbit Planets (4 Planets: Sales, Customers, Suppliers, Wholesalers) ---
+            val (p3X, p3Y) = calculateOrbitalPosition(30f, middleOrbitAngle, middleRx, middleRy)
             CosmicPlanetNode(
-                planet = planetsList[3],
-                xOffset = centerX + screenWidth * 0.22f,
-                yOffset = centerY + screenHeight * 0.16f,
+                planet = planetsList[3], // المبيعات والفواتير
+                xOffset = p3X,
+                yOffset = p3Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 5: العملاء (Customers)
+            val (p4X, p4Y) = calculateOrbitalPosition(120f, middleOrbitAngle, middleRx, middleRy)
             CosmicPlanetNode(
-                planet = planetsList[4],
-                xOffset = centerX + screenWidth * 0.05f,
-                yOffset = centerY + screenHeight * 0.23f,
+                planet = planetsList[4], // العملاء
+                xOffset = p4X,
+                yOffset = p4Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 6: الموردون (Suppliers)
+            val (p5X, p5Y) = calculateOrbitalPosition(210f, middleOrbitAngle, middleRx, middleRy)
             CosmicPlanetNode(
-                planet = planetsList[5],
-                xOffset = centerX - screenWidth * 0.18f,
-                yOffset = centerY + screenHeight * 0.23f,
+                planet = planetsList[5], // الموردون
+                xOffset = p5X,
+                yOffset = p5Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 7: تجار الجملة (Wholesalers)
+            val (p6X, p6Y) = calculateOrbitalPosition(300f, middleOrbitAngle, middleRx, middleRy)
             CosmicPlanetNode(
-                planet = planetsList[6],
-                xOffset = centerX - screenWidth * 0.33f,
-                yOffset = centerY + screenHeight * 0.16f,
+                planet = planetsList[6], // تجار الجملة
+                xOffset = p6X,
+                yOffset = p6Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 8: المدفوعات والتحصيلات (Payments)
+            // --- Outer Orbit Planets (4 Planets: Payments, Expenses, Reports, Settings) ---
+            val (p7X, p7Y) = calculateOrbitalPosition(15f, outerOrbitAngle, outerRx, outerRy)
             CosmicPlanetNode(
-                planet = planetsList[7],
-                xOffset = centerX - screenWidth * 0.36f,
-                yOffset = centerY + screenHeight * 0.01f,
+                planet = planetsList[7], // المدفوعات
+                xOffset = p7X,
+                yOffset = p7Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 9: المصروفات والخزينة (Expenses)
+            val (p8X, p8Y) = calculateOrbitalPosition(105f, outerOrbitAngle, outerRx, outerRy)
             CosmicPlanetNode(
-                planet = planetsList[8],
-                xOffset = centerX - screenWidth * 0.35f,
-                yOffset = centerY - screenHeight * 0.14f,
+                planet = planetsList[8], // المصروفات
+                xOffset = p8X,
+                yOffset = p8Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 10: التقارير (Reports)
+            val (p9X, p9Y) = calculateOrbitalPosition(195f, outerOrbitAngle, outerRx, outerRy)
             CosmicPlanetNode(
-                planet = planetsList[9],
-                xOffset = centerX - screenWidth * 0.23f,
-                yOffset = centerY - screenHeight * 0.22f,
+                planet = planetsList[9], // التقارير
+                xOffset = p9X,
+                yOffset = p9Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
-            // Planet 11: الإعدادات (Settings)
+            val (p10X, p10Y) = calculateOrbitalPosition(285f, outerOrbitAngle, outerRx, outerRy)
             CosmicPlanetNode(
-                planet = planetsList[10],
-                xOffset = centerX - screenWidth * 0.10f,
-                yOffset = centerY - screenHeight * 0.15f,
+                planet = planetsList[10], // الإعدادات
+                xOffset = p10X,
+                yOffset = p10Y,
                 onInspect = { activePlanetForInspection = it }
             )
 
@@ -804,13 +858,9 @@ fun CosmicSolarSystemScreen(
                             // Button «دخول القسم»
                             Button(
                                 onClick = {
-                                    val target = activePlanetForInspection
+                                    val target = activePlanetForInspection ?: return@Button
                                     activePlanetForInspection = null
-                                    if (target?.isProductsPlanet == true) {
-                                        onEnterProductsPlanet()
-                                    } else if (target?.targetTab != null) {
-                                        onNavigateToTab(target.targetTab)
-                                    }
+                                    onEnterPlanet(target)
                                 },
                                 shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(
@@ -906,7 +956,7 @@ fun CosmicSolarSystemScreen(
                                 Surface(
                                     onClick = {
                                         showSectionsDirectory = false
-                                        activePlanetForInspection = planet
+                                        onEnterPlanet(planet)
                                     },
                                     shape = RoundedCornerShape(14.dp),
                                     color = Color(0x660F1F3D),

@@ -70,6 +70,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.ui.screens.cosmic.CosmicPlanetDef
 import com.example.ui.screens.cosmic.CosmicSolarSystemScreen
 import com.example.ui.screens.cosmic.CosmicProductsPlanetScreen
 import com.example.ui.screens.cosmic.CosmicPlanetaryTransitionOverlay
@@ -432,21 +433,21 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
         var showNotificationsDialog by remember { mutableStateOf(false) }
 
         var isInsideProductsPlanet by rememberSaveable { mutableStateOf(false) }
-        var isZoomingIntoProducts by remember { mutableStateOf(false) }
-        var isZoomingOutFromProducts by remember { mutableStateOf(false) }
+        var activeTransitionPlanet by remember { mutableStateOf<CosmicPlanetDef?>(null) }
+        var isTransitioningIn by remember { mutableStateOf(false) }
+        var isTransitioningOut by remember { mutableStateOf(false) }
 
-        // BackHandler: when outside CATALOG, return to the Solar System
-        if (currentTab != MainTab.CATALOG) {
+        val isSolarSystemActive = currentTab == MainTab.CATALOG && !isInsideProductsPlanet && !isTransitioningIn && !isTransitioningOut
+
+        if (!isSolarSystemActive) {
             BackHandler {
-                viewModel.selectTab(MainTab.CATALOG)
+                isTransitioningOut = true
             }
         }
 
-        val isSolarSystemActive = currentTab == MainTab.CATALOG && !isInsideProductsPlanet && !isZoomingIntoProducts && !isZoomingOutFromProducts
-
         Scaffold(
             topBar = {
-                val shouldShowTopBar = currentTab != MainTab.CATALOG
+                val shouldShowTopBar = !isSolarSystemActive && !isTransitioningIn && !isTransitioningOut
                 if (shouldShowTopBar) {
                     StoreTopAppBar(
                         currentUser = user,
@@ -465,12 +466,17 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                 }
             },
             bottomBar = {
-                val shouldShowBottomBar = currentTab != MainTab.CATALOG
+                val shouldShowBottomBar = !isSolarSystemActive && !isTransitioningIn && !isTransitioningOut
                 if (shouldShowBottomBar) {
                     AlBashiriBottomNavBar(
                         currentTab = currentTab,
                         isAdmin = isAdmin,
-                        onTabSelected = { viewModel.selectTab(it) },
+                        onTabSelected = { targetTab ->
+                            if (targetTab == MainTab.CATALOG) {
+                                isInsideProductsPlanet = false
+                            }
+                            viewModel.selectTab(targetTab)
+                        },
                         onBasheerClick = {
                             ttsHelper.stop()
                             showBasheerDialog = true
@@ -491,34 +497,43 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = CharcoalBackground
         ) { innerPadding ->
-            val contentPadding = if (currentTab == MainTab.CATALOG) androidx.compose.foundation.layout.PaddingValues(0.dp) else innerPadding
+            val contentPadding = if (isSolarSystemActive || isTransitioningIn || isTransitioningOut) androidx.compose.foundation.layout.PaddingValues(0.dp) else innerPadding
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
             ) {
-                when (currentTab) {
-                    MainTab.CATALOG -> {
-                        when {
-                            isZoomingIntoProducts -> {
-                                CosmicPlanetaryTransitionOverlay(
-                                    isZoomingIn = true,
-                                    onTransitionFinished = {
-                                        isZoomingIntoProducts = false
-                                        isInsideProductsPlanet = true
-                                    }
-                                )
+                if (isTransitioningIn) {
+                    CosmicPlanetaryTransitionOverlay(
+                        isZoomingIn = true,
+                        targetPlanet = activeTransitionPlanet,
+                        onTransitionFinished = {
+                            isTransitioningIn = false
+                            val planet = activeTransitionPlanet
+                            if (planet?.isProductsPlanet == true) {
+                                isInsideProductsPlanet = true
+                                viewModel.selectTab(MainTab.CATALOG)
+                            } else if (planet?.targetTab != null) {
+                                isInsideProductsPlanet = false
+                                viewModel.selectTab(planet.targetTab)
                             }
-                            isZoomingOutFromProducts -> {
-                                CosmicPlanetaryTransitionOverlay(
-                                    isZoomingIn = false,
-                                    onTransitionFinished = {
-                                        isZoomingOutFromProducts = false
-                                        isInsideProductsPlanet = false
-                                    }
-                                )
-                            }
-                            isInsideProductsPlanet -> {
+                        }
+                    )
+                } else if (isTransitioningOut) {
+                    CosmicPlanetaryTransitionOverlay(
+                        isZoomingIn = false,
+                        targetPlanet = activeTransitionPlanet,
+                        onTransitionFinished = {
+                            isTransitioningOut = false
+                            isInsideProductsPlanet = false
+                            activeTransitionPlanet = null
+                            viewModel.selectTab(MainTab.CATALOG)
+                        }
+                    )
+                } else {
+                    when (currentTab) {
+                        MainTab.CATALOG -> {
+                            if (isInsideProductsPlanet) {
                                 CosmicProductsPlanetScreen(
                                     currentUser = user,
                                     categories = categories,
@@ -544,17 +559,14 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                                     onUpdateModel = { viewModel.updateModel(it) },
                                     onDeleteModel = { viewModel.deleteModel(it) },
                                     onBackToSolarSystem = {
-                                        isZoomingOutFromProducts = true
+                                        isTransitioningOut = true
                                     }
                                 )
-                            }
-                            else -> {
+                            } else {
                                 CosmicSolarSystemScreen(
-                                    onEnterProductsPlanet = {
-                                        isZoomingIntoProducts = true
-                                    },
-                                    onNavigateToTab = { targetTab ->
-                                        viewModel.selectTab(targetTab)
+                                    onEnterPlanet = { planet ->
+                                        activeTransitionPlanet = planet
+                                        isTransitioningIn = true
                                     },
                                     onBasheerClick = {
                                         ttsHelper.stop()
@@ -572,7 +584,6 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                                 )
                             }
                         }
-                    }
 
                     MainTab.INVENTORY -> {
                         InventoryScreen(
@@ -889,6 +900,7 @@ fun AlBashiriApp(viewModel: MainViewModel = viewModel()) {
                             onEmptyBin = { viewModel.emptyRecycleBin() }
                         )
                     }
+                }
                 }
 
 
