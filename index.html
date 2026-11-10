@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>البشيري للأجهزة الكهربائية - تحميل التطبيق والمشروع</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy-bg: #090e1a;
+      --navy-surface: #10192a;
+      --navy-card: #162238;
+      --navy-border: #243556;
+      --gold-primary: #d4af37;
+      --gold-secondary: #f3c64f;
+      --gold-light: #fef08a;
+      --text-white: #f8fafc;
+      --text-muted: #94a3b8;
+      --success-green: #10b981;
+      --amber-warning: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--navy-bg);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.15) 0%, transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(16, 25, 42, 0.8) 0%, transparent 50%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+      background: var(--navy-surface);
+      border: 1px solid var(--navy-border);
+      border-radius: 24px;
+      padding: 36px 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(212, 175, 55, 0.08);
+      text-align: center;
+    }
+
+    .logo-wrapper {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      padding: 4px;
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-secondary));
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+    }
+
+    .logo-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      background: var(--navy-bg);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-secondary);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--text-white);
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--gold-secondary);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .description {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .downloads-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-decoration: none;
+      padding: 16px 20px;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 800;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .btn-apk {
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-secondary));
+      color: #0b132b;
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.35);
+    }
+
+    .btn-apk:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(212, 175, 55, 0.5);
+    }
+
+    .btn-zip {
+      background: var(--navy-card);
+      border: 1.5px solid var(--gold-primary);
+      color: var(--text-white);
+    }
+
+    .btn-zip:hover {
+      background: rgba(212, 175, 55, 0.12);
+      border-color: var(--gold-secondary);
+      transform: translateY(-2px);
+    }
+
+    .btn-cloud {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--navy-border);
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 12px 18px;
+    }
+
+    .btn-cloud:hover {
+      color: var(--text-white);
+      border-color: var(--gold-primary);
+    }
+
+    .btn-content {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: right;
+    }
+
+    .btn-icon {
+      font-size: 26px;
+    }
+
+    .btn-title {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .btn-subtitle {
+      font-size: 12px;
+      opacity: 0.8;
+      font-weight: 600;
+    }
+
+    .btn-arrow {
+      font-size: 18px;
+    }
+
+    .features-card {
+      background: var(--navy-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 16px;
+      padding: 18px;
+      text-align: right;
+      margin-bottom: 24px;
+    }
+
+    .features-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--gold-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .features-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .features-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .features-list li::before {
+      content: "✓";
+      color: var(--gold-primary);
+      font-weight: 900;
+    }
+
+    .footer {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 28px 18px;
+      }
+      .features-list {
+        grid-template-columns: 1fr;
+      }
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Logo -->
+    <div class="logo-wrapper">
+      <img src="app/src/main/res/drawable/albashiri_logo.jpg" alt="شعار البشيري للأجهزة الكهربائية" class="logo-img" onerror="this.src='https://api.iconify.design/material-symbols:storefront-rounded.svg?color=%23d4af37';">
+    </div>
+
+    <div class="badge">
+      ⚡ تطبيق أندرويد جاهز للتحميل والتثبيت
+    </div>
+
+    <h1>البشيري للأجهزة الكهربائية</h1>
+    <div class="subtitle">نظام إدارة المبيعات والمخزون والحسابات المتكامل</div>
+    <p class="description">
+      تم بناء التطبيق وتجميعه بالكامل بنجاح. يمكنك تحميل حزمة التثبيت المباشرة (APK) أو تحميل السورس كود البرمجي كاملاً (ZIP).
+    </p>
+
+    <!-- Download Buttons -->
+    <div class="downloads-grid">
+      <!-- Direct APK Download -->
+      <a href="AlBashiri_App.apk" download="AlBashiri_App.apk" class="btn btn-apk">
+        <div class="btn-content">
+          <span class="btn-icon">📲</span>
+          <div>
+            <div class="btn-title">تحميل تطبيق الأندرويد المباشر (APK)</div>
+            <div class="btn-subtitle">ملف التثبيت للهواتف والأجهزة اللوحية • الحجم: 24 MB</div>
+          </div>
+        </div>
+        <span class="btn-arrow">⬇️</span>
+      </a>
+
+      <!-- Direct ZIP Source Code Download -->
+      <a href="AlBashiri_Source_Code.zip" download="AlBashiri_Source_Code.zip" class="btn btn-zip">
+        <div class="btn-content">
+          <span class="btn-icon">📦</span>
+          <div>
+            <div class="btn-title">تحميل الكود المصدري كاملاً (ZIP)</div>
+            <div class="btn-subtitle">مشروع Kotlin + Jetpack Compose كامل • الحجم: 1.5 MB</div>
+          </div>
+        </div>
+        <span class="btn-arrow">⬇️</span>
+      </a>
+
+      <!-- Link to AI Studio App Page -->
+      <a href="https://ai.studio/apps/2e4be5ed-5768-4c00-b7ba-384a7ebaad99" target="_blank" rel="noopener noreferrer" class="btn btn-cloud">
+        <div class="btn-content">
+          <span class="btn-icon">✨</span>
+          <div>
+            <div class="btn-title">فتح صفحة التطبيق في Google AI Studio</div>
+            <div class="btn-subtitle">معاينة المحاكي السحابي وإدارة المشروع عبر الرابط الرسمي</div>
+          </div>
+        </div>
+        <span class="btn-arrow">↗</span>
+      </a>
+    </div>
+
+    <!-- App Features Overview -->
+    <div class="features-card">
+      <div class="features-title">
+        <span>⭐</span> ميزات نظام البشيري المتكامل:
+      </div>
+      <ul class="features-list">
+        <li>شاشة ترحيبية فاخرة باللون الكحلي والذهبي</li>
+        <li>حسابات منفصلة للمدير و3 بائعين بكلمات مرور</li>
+        <li>كتالوج أجهزة هرمي (قسم > شركة > منتج > موديل)</li>
+        <li>تسجيل بيع فوري مع حماية الحد الأدنى للسعر</li>
+        <li>تنبيهات اقتراب نفاد المخزون (بصري وصوتي)</li>
+        <li>كشوف حسابات التجار والموردين وسجل العمليات</li>
+        <li>مساعد صوتي ذكي "بشير" بصوت رجالي فخم</li>
+        <li>تصدير نسخ احتياطية شاملة بصيغة CSV</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      جميع الحقوق محفوظة &copy; 2026 محلات البشيري للأجهزة الكهربائية
+    </div>
+  </div>
+
+</body>
+</html>

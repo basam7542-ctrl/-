@@ -1,0 +1,1083 @@
+package com.example.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import com.example.data.local.CategoryEntity
+import com.example.data.local.InventoryAuditEntity
+import com.example.data.local.InventoryAuditWithItems
+import com.example.data.local.MerchantAccountEntity
+import com.example.data.local.ProductModelEntity
+import com.example.data.local.StockMovementEntity
+import com.example.data.local.SupplierAccountEntity
+import com.example.data.local.UserAccountEntity
+import com.example.ui.components.EditStockDialog
+import com.example.ui.theme.CharcoalBackground
+import com.example.ui.theme.ElectricBlue
+import com.example.ui.theme.ElectricBlueContainer
+import com.example.ui.theme.ErrorRed
+import com.example.ui.theme.GlassBorder
+import com.example.ui.theme.GoldBorderGlow
+import com.example.ui.theme.GoldContainer
+import com.example.ui.theme.GoldLight
+import com.example.ui.theme.GoldPrimary
+import com.example.ui.theme.GoldSecondary
+import com.example.ui.theme.NavyCardBorder
+import com.example.ui.theme.NavyDarkBackground
+import com.example.ui.theme.NavySurface
+import com.example.ui.theme.NavySurfaceElevated
+import com.example.ui.theme.NavySurfaceVariant
+import com.example.ui.theme.SuccessGreen
+import com.example.ui.theme.TextDark
+import com.example.ui.theme.TextMuted
+import com.example.ui.theme.TextWhite
+import com.example.ui.theme.WarningAmber
+import java.text.NumberFormat
+import java.util.Locale
+
+enum class InventorySubTab {
+    STOCK_BALANCE,
+    STOCK_MOVEMENTS,
+    INVENTORY_AUDIT,
+    REPORTS
+}
+
+@Composable
+fun InventoryScreen(
+    currentUser: UserAccountEntity,
+    models: List<ProductModelEntity>,
+    categories: List<CategoryEntity>,
+    searchQuery: String,
+    categoryFilter: String?,
+    sortOption: String,
+    onSearchChange: (String) -> Unit,
+    onCategoryFilterChange: (String?) -> Unit,
+    onSortOptionChange: (String) -> Unit,
+    onOpenSale: (ProductModelEntity) -> Unit,
+    onUpdateStock: (modelId: Long, newStock: Int) -> Unit,
+    movements: List<StockMovementEntity> = emptyList(),
+    audits: List<InventoryAuditWithItems> = emptyList(),
+    suppliers: List<SupplierAccountEntity> = emptyList(),
+    merchants: List<MerchantAccountEntity> = emptyList(),
+    movementSearchQuery: String = "",
+    movementTypeFilter: String? = null,
+    onMovementSearchChange: (String) -> Unit = {},
+    onMovementFilterChange: (String?) -> Unit = {},
+    onReceiveStock: (
+        modelId: Long,
+        quantity: Int,
+        unitCostPrice: Double,
+        supplierId: Long?,
+        merchantId: Long?,
+        supplierOrMerchantName: String,
+        purchaseInvoiceNumber: String,
+        notes: String,
+        onSuccess: (ProductModelEntity) -> Unit,
+        onError: (String) -> Unit
+    ) -> Unit = { _, _, _, _, _, _, _, _, _, _ -> },
+    onCreateAudit: (
+        title: String,
+        scope: String,
+        targetName: String?,
+        notes: String,
+        onSuccess: (InventoryAuditWithItems) -> Unit,
+        onError: (String) -> Unit
+    ) -> Unit = { _, _, _, _, _, _ -> },
+    onUpdateAuditItemActualQuantity: (itemId: Long, actualQuantity: Int) -> Unit = { _, _ -> },
+    onSettleAudit: (
+        auditId: Long,
+        reason: String,
+        onSuccess: (InventoryAuditWithItems) -> Unit,
+        onError: (String) -> Unit
+    ) -> Unit = { _, _, _, _ -> },
+    onCancelAudit: (
+        auditId: Long,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) -> Unit = { _, _, _ -> },
+    onExportMovementsCsv: () -> Unit = {},
+    onExportAuditCsv: (InventoryAuditWithItems) -> Unit = {},
+    onExportValuationCsv: () -> Unit = {}
+) {
+    val isAdmin = currentUser.role == "ADMIN"
+    var selectedSubTab by remember { mutableStateOf(InventorySubTab.STOCK_BALANCE) }
+    val numberFormat = remember { NumberFormat.getNumberInstance(Locale("ar", "EG")) }
+
+    var modelForStockEdit by remember { mutableStateOf<ProductModelEntity?>(null) }
+    var filterLowStockOnly by remember { mutableStateOf(false) }
+
+    // Filter & Sort Logic
+    val filteredModels = models
+        .filter { model ->
+            val matchesCategory = categoryFilter == null || model.categoryName == categoryFilter
+            val matchesLowStock = !filterLowStockOnly || model.stockQuantity <= 2
+            val matchesSearch = searchQuery.isBlank() ||
+                model.modelName.contains(searchQuery, ignoreCase = true) ||
+                model.productName.contains(searchQuery, ignoreCase = true) ||
+                model.brandName.contains(searchQuery, ignoreCase = true) ||
+                model.code.contains(searchQuery, ignoreCase = true)
+            matchesCategory && matchesLowStock && matchesSearch
+        }
+        .let { list ->
+            when (sortOption) {
+                "LOW_STOCK" -> list.sortedBy { it.stockQuantity }
+                "HIGH_STOCK" -> list.sortedByDescending { it.stockQuantity }
+                "PRICE_DESC" -> list.sortedByDescending { it.finalPrice }
+                "PRICE_ASC" -> list.sortedBy { it.finalPrice }
+                else -> list.sortedWith(compareBy({ it.categoryName }, { it.brandName }))
+            }
+        }
+
+    val totalStockCount = models.sumOf { it.stockQuantity }
+    val lowStockCount = models.count { it.stockQuantity <= 2 }
+    val totalModelsCount = models.size
+    val stockCoveragePercent = if (totalModelsCount > 0) {
+        (((totalModelsCount - lowStockCount).toFloat() / totalModelsCount.toFloat()) * 100).toInt()
+    } else 100
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(CharcoalBackground)
+    ) {
+        // Top Sub-Tabs Row
+        ScrollableTabRow(
+            selectedTabIndex = selectedSubTab.ordinal,
+            containerColor = NavySurfaceElevated,
+            contentColor = GoldPrimary,
+            edgePadding = 12.dp,
+            indicator = { tabPositions ->
+                TabRowDefaults.SecondaryIndicator(
+                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedSubTab.ordinal]),
+                    color = GoldPrimary,
+                    height = 3.dp
+                )
+            },
+            divider = {}
+        ) {
+            Tab(
+                selected = selectedSubTab == InventorySubTab.STOCK_BALANCE,
+                onClick = { selectedSubTab = InventorySubTab.STOCK_BALANCE },
+                text = { Text("رصيد المخزون", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                icon = { Icon(Icons.Default.Inventory2, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                selectedContentColor = GoldPrimary,
+                unselectedContentColor = TextMuted,
+                modifier = Modifier.testTag("tab_sub_stock_balance")
+            )
+
+            Tab(
+                selected = selectedSubTab == InventorySubTab.STOCK_MOVEMENTS,
+                onClick = { selectedSubTab = InventorySubTab.STOCK_MOVEMENTS },
+                text = { Text("حركة المخزون (${movements.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                icon = { Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                selectedContentColor = GoldPrimary,
+                unselectedContentColor = TextMuted,
+                modifier = Modifier.testTag("tab_sub_stock_movements")
+            )
+
+            Tab(
+                selected = selectedSubTab == InventorySubTab.INVENTORY_AUDIT,
+                onClick = { selectedSubTab = InventorySubTab.INVENTORY_AUDIT },
+                text = { Text("الجرد والتسويات (${audits.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                icon = { Icon(Icons.Default.FactCheck, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                selectedContentColor = GoldPrimary,
+                unselectedContentColor = TextMuted,
+                modifier = Modifier.testTag("tab_sub_inventory_audit")
+            )
+
+            Tab(
+                selected = selectedSubTab == InventorySubTab.REPORTS,
+                onClick = { selectedSubTab = InventorySubTab.REPORTS },
+                text = { Text("تقارير المخزون", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                icon = { Icon(Icons.Default.Assessment, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                selectedContentColor = GoldPrimary,
+                unselectedContentColor = TextMuted,
+                modifier = Modifier.testTag("tab_sub_inventory_reports")
+            )
+        }
+
+        when (selectedSubTab) {
+            InventorySubTab.STOCK_BALANCE -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(CharcoalBackground)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+            // 1. Warehouse Stock Control Center Hero
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+                colors = CardDefaults.cardColors(containerColor = NavySurfaceElevated),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GoldBorderGlow),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(GoldContainer)
+                                    .border(1.dp, GoldPrimary, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Inventory, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(20.dp))
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "مركز الرقابة على المخزون",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextWhite
+                                )
+                                Text(
+                                    text = "جرد فوري للأجهزة المتوفرة والنواقص",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = GoldSecondary,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+
+                        // Readiness indicator chip
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (lowStockCount > 0) WarningAmber.copy(alpha = 0.18f) else SuccessGreen.copy(alpha = 0.18f))
+                            .border(
+                                0.8.dp,
+                                if (lowStockCount > 0) WarningAmber.copy(alpha = 0.6f) else SuccessGreen.copy(alpha = 0.6f),
+                                RoundedCornerShape(20.dp)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    if (lowStockCount > 0) Icons.Default.Warning else Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = if (lowStockCount > 0) WarningAmber else SuccessGreen,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (lowStockCount > 0) "$lowStockCount نواقص" else "المخزون متكامل",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (lowStockCount > 0) WarningAmber else SuccessGreen,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Two Specialized Metrics Tiles
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Total Balance Tile
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NavySurface)
+                                .border(0.8.dp, GlassBorder, RoundedCornerShape(12.dp))
+                                .padding(10.dp)
+                        ) {
+                            Column {
+                                Text(text = "رصيد المخزن الحالي", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                Text(
+                                    text = "${numberFormat.format(totalStockCount)} قطعة",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = GoldPrimary
+                                )
+                                Text(
+                                    text = "موزعة على $totalModelsCount موديل",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted,
+                                    fontSize = 9.sp
+                                )
+                            }
+                        }
+
+                        // Low Stock Interactive Alert Tile
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (filterLowStockOnly) WarningAmber.copy(alpha = 0.22f) else NavySurface)
+                                .border(
+                                    1.dp,
+                                    if (filterLowStockOnly) WarningAmber else if (lowStockCount > 0) WarningAmber.copy(alpha = 0.6f) else GlassBorder,
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .clickable {
+                                    filterLowStockOnly = !filterLowStockOnly
+                                    if (filterLowStockOnly) onSortOptionChange("LOW_STOCK")
+                                }
+                                .padding(10.dp)
+                                .testTag("metric_card_low_stock")
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "نواقص حرجة (<=2)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (filterLowStockOnly) WarningAmber else TextMuted
+                                    )
+                                    if (lowStockCount > 0) {
+                                        Icon(
+                                            Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = WarningAmber,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "$lowStockCount جهاز",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (lowStockCount > 0) WarningAmber else SuccessGreen
+                                )
+                                Text(
+                                    text = if (filterLowStockOnly) "اضغط لإلغاء الفلتر ✕" else "اضغط لعرض النواقص",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (filterLowStockOnly) WarningAmber else GoldSecondary,
+                                    fontSize = 9.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Progress bar
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "معدل توفر المعروض بالمخزن", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 10.sp)
+                        Text(text = "$stockCoveragePercent% مكتمل", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = GoldLight, fontSize = 10.sp)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LinearProgressIndicator(
+                        progress = { (stockCoveragePercent / 100f).coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(5.dp)
+                            .clip(RoundedCornerShape(3.dp)),
+                        color = if (stockCoveragePercent > 80) GoldPrimary else WarningAmber,
+                        trackColor = CharcoalBackground
+                    )
+                }
+            }
+
+            // PROMINENT INTERACTIVE LOW STOCK ALERT BANNER (Preserving testTag)
+            if (lowStockCount > 0) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                        .clickable {
+                            filterLowStockOnly = !filterLowStockOnly
+                            if (filterLowStockOnly) onSortOptionChange("LOW_STOCK")
+                        }
+                        .testTag("low_stock_banner"),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (filterLowStockOnly) WarningAmber.copy(alpha = 0.22f) else WarningAmber.copy(alpha = 0.12f)
+                    ),
+                    border = CardDefaults.outlinedCardBorder().copy(
+                        brush = SolidColor(WarningAmber.copy(alpha = 0.85f))
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = "تنبيه اقتراب نفاد المخزون",
+                                tint = WarningAmber,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "تنبيه اقتراب نفاد المخزون",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = WarningAmber
+                                )
+                                Text(
+                                    text = "يوجد $lowStockCount أجهزة رصيدها 2 قطعة أو أقل بالمخزن",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextWhite.copy(alpha = 0.95f)
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (filterLowStockOnly) WarningAmber else NavySurface)
+                                .border(1.dp, WarningAmber, RoundedCornerShape(6.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (filterLowStockOnly) "عرض الكل ✕" else "تصفية النواقص",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (filterLowStockOnly) TextDark else WarningAmber
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Search Bar (Preserving testTag)
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchChange,
+                placeholder = { Text("بحث باسم الجهاز، الموديل، الشركة، أو الكود...", color = TextMuted, fontSize = 13.sp) },
+                singleLine = true,
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = "بحث", tint = GoldPrimary)
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotBlank()) {
+                        IconButton(onClick = { onSearchChange("") }) {
+                            Icon(Icons.Default.Clear, contentDescription = "مسح", tint = TextMuted)
+                        }
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = NavySurface,
+                    unfocusedContainerColor = NavySurface,
+                    focusedBorderColor = GoldPrimary,
+                    unfocusedBorderColor = NavyCardBorder,
+                    cursorColor = GoldPrimary,
+                    focusedTextColor = TextWhite,
+                    unfocusedTextColor = TextWhite
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+                    .testTag("inventory_search_bar")
+            )
+
+            // Category Filter Chips
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                FilterChip(
+                    selected = categoryFilter == null,
+                    onClick = { onCategoryFilterChange(null) },
+                    label = { Text("جميع الأقسام") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = GoldPrimary,
+                        selectedLabelColor = TextDark,
+                        containerColor = NavySurface,
+                        labelColor = TextWhite
+                    )
+                )
+                categories.forEach { cat ->
+                    FilterChip(
+                        selected = categoryFilter == cat.name,
+                        onClick = { onCategoryFilterChange(cat.name) },
+                        label = { Text(cat.name) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = GoldPrimary,
+                            selectedLabelColor = TextDark,
+                            containerColor = NavySurface,
+                            labelColor = TextWhite
+                        )
+                    )
+                }
+            }
+
+            // Sort & Filter Options Row (Preserving testTag)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Quick Toggle Chip for Low Stock Only
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (filterLowStockOnly) WarningAmber.copy(alpha = 0.25f) else NavySurface)
+                        .border(
+                            1.dp,
+                            if (filterLowStockOnly) WarningAmber else NavyCardBorder,
+                            RoundedCornerShape(16.dp)
+                        )
+                        .clickable {
+                            filterLowStockOnly = !filterLowStockOnly
+                            if (filterLowStockOnly) onSortOptionChange("LOW_STOCK")
+                        }
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .testTag("filter_low_stock_chip")
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = if (filterLowStockOnly) WarningAmber else TextMuted,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (filterLowStockOnly) "نواقص فقط ($lowStockCount) ✓" else "فلتر النواقص (<=2)",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (filterLowStockOnly) FontWeight.Bold else FontWeight.Normal,
+                            color = if (filterLowStockOnly) WarningAmber else TextWhite
+                        )
+                    }
+                }
+
+                Text(
+                    text = "الترتيب:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMuted
+                )
+
+                listOf(
+                    "ALL" to "الافتراضي",
+                    "LOW_STOCK" to "الأقل كمية أولاً",
+                    "HIGH_STOCK" to "الأعلى كمية",
+                    "PRICE_DESC" to "الأعلى سعراً",
+                    "PRICE_ASC" to "الأقل سعراً"
+                ).forEach { (key, label) ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (sortOption == key) NavySurfaceElevated else NavySurface)
+                            .border(
+                                1.dp,
+                                if (sortOption == key) GoldPrimary else NavyCardBorder,
+                                RoundedCornerShape(16.dp)
+                            )
+                            .clickable { onSortOptionChange(key) }
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (sortOption == key) FontWeight.Bold else FontWeight.Normal,
+                            color = if (sortOption == key) GoldPrimary else TextWhite
+                        )
+                    }
+                }
+            }
+
+            // Inventory Ledger List
+            if (filteredModels.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "لا توجد أجهزة مطابقة لخيارات الفلترة الحالية",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextMuted
+                    )
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 110.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(filteredModels, key = { it.id }) { model ->
+                        InventoryItemCard(
+                            model = model,
+                            isAdmin = isAdmin,
+                            numberFormat = numberFormat,
+                            onOpenSale = { onOpenSale(model) },
+                            onEditStock = { modelForStockEdit = model },
+                            onQuickStockChange = { delta ->
+                                val newStock = maxOf(0, model.stockQuantity + delta)
+                                onUpdateStock(model.id, newStock)
+                            }
+                        )
+                    }
+                }
+                    }
+                }
+            }
+        }
+
+            InventorySubTab.STOCK_MOVEMENTS -> {
+                StockMovementScreen(
+                    currentUser = currentUser,
+                    movements = movements,
+                    models = models,
+                    suppliers = suppliers,
+                    merchants = merchants,
+                    searchQuery = movementSearchQuery,
+                    typeFilter = movementTypeFilter,
+                    onSearchChange = onMovementSearchChange,
+                    onFilterChange = onMovementFilterChange,
+                    onReceiveStock = onReceiveStock,
+                    onExportCsv = onExportMovementsCsv
+                )
+            }
+
+            InventorySubTab.INVENTORY_AUDIT -> {
+                InventoryAuditScreen(
+                    currentUser = currentUser,
+                    audits = audits,
+                    categories = categories,
+                    models = models,
+                    onCreateAudit = onCreateAudit,
+                    onUpdateActualQuantity = onUpdateAuditItemActualQuantity,
+                    onSettleAudit = onSettleAudit,
+                    onCancelAudit = onCancelAudit,
+                    onExportAuditCsv = onExportAuditCsv
+                )
+            }
+
+            InventorySubTab.REPORTS -> {
+                InventoryReportsView(
+                    currentUser = currentUser,
+                    models = models,
+                    categories = categories,
+                    movements = movements,
+                    onExportValuationCsv = onExportValuationCsv,
+                    onExportMovementsCsv = onExportMovementsCsv
+                )
+            }
+        }
+    }
+
+    if (modelForStockEdit != null) {
+        EditStockDialog(
+            modelName = "${modelForStockEdit!!.productName} - ${modelForStockEdit!!.modelName}",
+            currentStock = modelForStockEdit!!.stockQuantity,
+            onDismiss = { modelForStockEdit = null },
+            onConfirm = { newStock ->
+                onUpdateStock(modelForStockEdit!!.id, newStock)
+                modelForStockEdit = null
+            }
+        )
+    }
+}
+
+@Composable
+fun InventoryItemCard(
+    model: ProductModelEntity,
+    isAdmin: Boolean,
+    numberFormat: NumberFormat,
+    onOpenSale: () -> Unit,
+    onEditStock: () -> Unit,
+    onQuickStockChange: (delta: Int) -> Unit
+) {
+    val isZeroStock = model.stockQuantity == 0
+    val isLowStock = model.stockQuantity in 1..2
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("inventory_item_${model.id}"),
+        colors = CardDefaults.cardColors(containerColor = NavySurface),
+        border = CardDefaults.outlinedCardBorder().copy(
+            brush = SolidColor(
+                when {
+                    isZeroStock -> ErrorRed.copy(alpha = 0.85f)
+                    isLowStock -> WarningAmber.copy(alpha = 0.85f)
+                    else -> GlassBorder
+                }
+            )
+        ),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            // Header Row: Category & Brand + Stock Level Badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(GoldPrimary)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "${model.categoryName} • ${model.brandName}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GoldSecondary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                // Prominent Stock Status Badge
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            when {
+                                isZeroStock -> ErrorRed.copy(alpha = 0.22f)
+                                isLowStock -> WarningAmber.copy(alpha = 0.22f)
+                                else -> SuccessGreen.copy(alpha = 0.2f)
+                            }
+                        )
+                        .border(
+                            0.8.dp,
+                            when {
+                                isZeroStock -> ErrorRed.copy(alpha = 0.6f)
+                                isLowStock -> WarningAmber.copy(alpha = 0.7f)
+                                else -> SuccessGreen.copy(alpha = 0.4f)
+                            },
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isZeroStock || isLowStock) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = "تحذير المخزون",
+                                tint = if (isZeroStock) ErrorRed else WarningAmber,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                        Text(
+                            text = when {
+                                isZeroStock -> "نفد من المخزن (0)"
+                                model.stockQuantity == 1 -> "متبقي قطعة واحدة فقط!"
+                                model.stockQuantity == 2 -> "متبقي قطعتان فقط"
+                                else -> "${model.stockQuantity} قطعة متوفرة"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = when {
+                                isZeroStock -> ErrorRed
+                                isLowStock -> WarningAmber
+                                else -> SuccessGreen
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Title & Code Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${model.productName} - ${model.modelName}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextWhite,
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (model.code.isNotBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(ElectricBlueContainer)
+                            .border(0.6.dp, ElectricBlue.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 7.dp, vertical = 2.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.QrCode, contentDescription = null, tint = ElectricBlue, modifier = Modifier.size(12.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = model.code,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = ElectricBlue,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Warning Strip if critical
+            if (isZeroStock || isLowStock) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isZeroStock) ErrorRed.copy(alpha = 0.12f) else WarningAmber.copy(alpha = 0.12f))
+                        .border(
+                            0.6.dp,
+                            if (isZeroStock) ErrorRed.copy(alpha = 0.5f) else WarningAmber.copy(alpha = 0.5f),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = if (isZeroStock) ErrorRed else WarningAmber,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isZeroStock) {
+                            "تنبيه: هذا الموديل نفد بالكامل من المخزن، يرجى طلب توريد جديد."
+                        } else {
+                            "تنبيه: الكمية المتبقية حرجة بالمخزن (${model.stockQuantity} قطعة فقط)."
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isZeroStock) ErrorRed else WarningAmber,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Split Layout: Pricing on Right, Quick Quantity Adjuster on Left
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(NavySurfaceVariant)
+                    .border(0.6.dp, GlassBorder, RoundedCornerShape(10.dp))
+                    .padding(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Pricing Box
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "سعر البيع: ", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                            Text(
+                                text = "${numberFormat.format(model.finalPrice)} ج.م",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextWhite
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "الحد الأدنى: ", style = MaterialTheme.typography.labelSmall, color = GoldSecondary, fontSize = 10.sp)
+                            Text(
+                                text = "${numberFormat.format(model.minAllowedPrice)} ج.م",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = GoldPrimary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    // Warehouse Stepper & Quantity Widget
+                    if (isAdmin) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(NavySurfaceElevated)
+                                .border(0.6.dp, GlassBorder, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            FilledTonalIconButton(
+                                onClick = { onQuickStockChange(-1) },
+                                enabled = model.stockQuantity > 0,
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = "تقليل رصيد المخزن 1", modifier = Modifier.size(15.dp))
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 8.dp)
+                                    .clickable { onEditStock() },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "${model.stockQuantity}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = if (model.stockQuantity <= 2) WarningAmber else GoldPrimary
+                                    )
+                                    Text("قطعة", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 8.sp)
+                                }
+                            }
+
+                            FilledTonalIconButton(
+                                onClick = { onQuickStockChange(1) },
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "زيادة رصيد المخزن 1", modifier = Modifier.size(15.dp))
+                            }
+
+                            IconButton(
+                                onClick = onEditStock,
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(Icons.Default.Edit, contentDescription = "تعديل رصيد المخزن", tint = GoldSecondary, modifier = Modifier.size(14.dp))
+                            }
+                        }
+                    } else {
+                        // For seller: display stock count clearly
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(NavySurfaceElevated)
+                                .border(0.6.dp, GlassBorder, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "${model.stockQuantity} قطعة بالمخزن",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = GoldPrimary
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Action: Instant Sale Button
+            Button(
+                onClick = onOpenSale,
+                enabled = model.stockQuantity > 0,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GoldPrimary,
+                    contentColor = TextDark
+                ),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(42.dp)
+            ) {
+                Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (model.stockQuantity > 0) "بيع فوري لهذا الموديل" else "نفد من المخزن",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+            }
+        }
+    }
+}

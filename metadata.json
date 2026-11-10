@@ -1,0 +1,6 @@
+{
+  "name": "البشيري",
+  "description": "تطبيق إدارة مبيعات ومخزون وكشوف حسابات البشيري للأجهزة الكهربائية",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
